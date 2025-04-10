@@ -1,0 +1,87 @@
+{
+ "actions": [],
+ "autoname": "naming_series:",
+ "creation": "2025-04-07 16:09:04.527558",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "naming_series",
+  "branch",
+  "date_of_purchase",
+  "status",
+  "amended_from"
+ ],
+ "fields": [
+  {
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "hidden": 1,
+   "label": "Naming Series",
+   "options": "CRT.-.{branch}.-.######"
+  },
+  {
+   "fieldname": "branch",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Branch",
+   "options": "Branch",
+   "reqd": 1
+  },
+  {
+   "fieldname": "date_of_purchase",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Date of Purchase",
+   "reqd": 1
+  },
+  {
+   "default": "Available",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "Available\nIn Use\nDamaged"
+  },
+  {
+   "fieldname": "printing_done_on",
+   "fieldtype": "Date",
+   "label": "Printing Done On"
+  },
+  {
+   "fieldname": "last_scanned_on",
+   "fieldtype": "Date",
+   "label": "Last Scanned On"
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "Crate",
+   "print_hide": 1,
+   "read_only": 1,
+   "search_index": 1
+  }
+ ],
+ "is_submittable": 1,
+ "links": [],
+ "modified": "2025-04-07 16:09:49.100737",
+ "modified_by": "Administrator",
+ "module": "custom_inventory_management",
+ "name": "Crate",
+ "naming_rule": "By \"Naming Series\" field",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "cancel": 1,
+   "create": 1,
+   "delete": 1,
+   "read": 1,
+   "role": "System Manager",
+   "submit": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
