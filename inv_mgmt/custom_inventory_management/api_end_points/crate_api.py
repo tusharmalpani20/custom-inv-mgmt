@@ -4,7 +4,7 @@ from typing import Dict, Any
 # Hardcoded API token for app authentication
 API_TOKEN = "SID_FARM_CRATE_SCAN_9X72_TOKEN"  # This should be same in the mobile app
 
-@frappe.whitelist(allow_guest=True)
+@frappe.whitelist(allow_guest=True, methods=["POST"])
 def update_crate_scan(crate_id: str) -> Dict[str, Any]:
     """
     Updates the crate's printing_done_on and last_scanned_on fields when scanned via mobile app
