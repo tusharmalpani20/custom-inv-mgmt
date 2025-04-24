@@ -131,7 +131,7 @@ def get_crate_details(crate_id: str) -> Dict[str, Any]:
             "code": "CRATE_DETAILS_RETRIEVED",
             "data": {
                 "crate_id": crate.name,
-                "crate_number": crate.crate_number,
+                "crate_number": crate.name,
                 "printing_done_on": crate.printing_done_on,
                 "last_scanned_on": crate.last_scanned_on,
                 "status": crate.status
