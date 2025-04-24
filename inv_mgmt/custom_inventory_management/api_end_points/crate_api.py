@@ -87,3 +87,72 @@ def update_crate_scan(crate_id: str) -> Dict[str, Any]:
             "code": "INTERNAL_SERVER_ERROR",
             "http_status_code": 500
         }
+
+@frappe.whitelist(allow_guest=True, methods=["GET"])
+def get_crate_details(crate_id: str) -> Dict[str, Any]:
+    """
+    Retrieves details of a crate based on its ID
+    Required header: API-TOKEN
+    Args:
+        crate_id: ID of the crate to retrieve details for
+    """
+    try:
+        # Verify API token
+        api_token = frappe.request.headers.get('API-TOKEN')
+        if not api_token or api_token != API_TOKEN:
+            frappe.local.response['http_status_code'] = 401
+            return {
+                "success": False,
+                "status": "error",
+                "message": "Invalid API token",
+                "code": "INVALID_API_TOKEN",
+                "http_status_code": 401
+            }
+
+        # Get crate document
+        try:
+            crate = frappe.get_doc("Crate", crate_id)
+        except frappe.DoesNotExistError:
+            frappe.local.response['http_status_code'] = 404
+            return {
+                "success": False,
+                "status": "error",
+                "message": "Crate not found",
+                "code": "CRATE_NOT_FOUND",
+                "http_status_code": 404
+            }
+
+        # Return crate details
+        frappe.local.response['http_status_code'] = 200
+        return {
+            "success": True,
+            "status": "success",
+            "message": "Crate details retrieved successfully",
+            "code": "CRATE_DETAILS_RETRIEVED",
+            "data": {
+                "crate_id": crate.name,
+                "crate_number": crate.crate_number,
+                "printing_done_on": crate.printing_done_on,
+                "last_scanned_on": crate.last_scanned_on,
+                "status": crate.status
+            },
+            "http_status_code": 200
+        }
+
+    except Exception as e:
+        frappe.log_error(
+            title="Get Crate Details - Error",
+            message={
+                "error": str(e),
+                "crate_id": crate_id,
+                "traceback": frappe.get_traceback()
+            }
+        )
+        frappe.local.response['http_status_code'] = 500
+        return {
+            "success": False,
+            "status": "error",
+            "message": f"Error retrieving crate details: {str(e)}",
+            "code": "INTERNAL_SERVER_ERROR",
+            "http_status_code": 500
+        }
