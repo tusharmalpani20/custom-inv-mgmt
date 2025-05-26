@@ -1,0 +1,117 @@
+{
+ "actions": [],
+ "autoname": "format:IN-{delivery_route}-{date}-{##}",
+ "creation": "2025-05-24 18:10:03.825230",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "section_break_vcor",
+  "amended_from",
+  "delivery_route",
+  "vehicle",
+  "vehicle_license_plate",
+  "column_break_jabd",
+  "for",
+  "date",
+  "indent_items_section",
+  "items"
+ ],
+ "fields": [
+  {
+   "fieldname": "section_break_vcor",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "Indent",
+   "print_hide": 1,
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "delivery_route",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Delivery Route",
+   "options": "Delivery Route",
+   "reqd": 1
+  },
+  {
+   "fieldname": "vehicle",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Vehicle",
+   "options": "Vehicle",
+   "reqd": 1
+  },
+  {
+   "fetch_from": "vehicle.license_plate",
+   "fieldname": "vehicle_license_plate",
+   "fieldtype": "Data",
+   "label": "Vehicle License Plate"
+  },
+  {
+   "fieldname": "column_break_jabd",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "for",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "For",
+   "options": "Warehouse",
+   "reqd": 1
+  },
+  {
+   "fieldname": "date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Date",
+   "reqd": 1
+  },
+  {
+   "fieldname": "indent_items_section",
+   "fieldtype": "Section Break",
+   "label": "Indent Items"
+  },
+  {
+   "fieldname": "items",
+   "fieldtype": "Table",
+   "label": "Items",
+   "options": "Indent Item",
+   "reqd": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "is_submittable": 1,
+ "links": [],
+ "modified": "2025-05-24 18:22:03.057289",
+ "modified_by": "Administrator",
+ "module": "custom_inventory_management",
+ "name": "Indent",
+ "naming_rule": "Expression",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

@@ -1,0 +1,72 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2025-05-24 18:03:50.621486",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "sku",
+  "quantity",
+  "crates",
+  "loose",
+  "difference",
+  "actual"
+ ],
+ "fields": [
+  {
+   "fieldname": "sku",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "SKU",
+   "options": "Item",
+   "reqd": 1
+  },
+  {
+   "fieldname": "quantity",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "Quantity",
+   "non_negative": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "crates",
+   "fieldtype": "Float",
+   "label": "Crates",
+   "non_negative": 1
+  },
+  {
+   "fieldname": "loose",
+   "fieldtype": "Float",
+   "label": "Loose",
+   "non_negative": 1
+  },
+  {
+   "fieldname": "difference",
+   "fieldtype": "Float",
+   "label": "Difference",
+   "non_negative": 1
+  },
+  {
+   "fieldname": "actual",
+   "fieldtype": "Float",
+   "label": "Actual",
+   "non_negative": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2025-05-24 18:07:19.159438",
+ "modified_by": "Administrator",
+ "module": "custom_inventory_management",
+ "name": "Indent Item",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
