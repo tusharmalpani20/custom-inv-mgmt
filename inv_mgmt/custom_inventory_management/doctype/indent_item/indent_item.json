@@ -1,0 +1,92 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2025-05-24 18:03:50.621486",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "sku",
+  "uom",
+  "quantity",
+  "crates",
+  "loose",
+  "difference",
+  "actual"
+ ],
+ "fields": [
+  {
+   "columns": 2,
+   "fieldname": "sku",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "SKU",
+   "options": "Item",
+   "reqd": 1
+  },
+  {
+   "columns": 1,
+   "fieldname": "uom",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "UOM",
+   "options": "UOM",
+   "reqd": 1
+  },
+  {
+   "columns": 2,
+   "fieldname": "quantity",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "Quantity",
+   "non_negative": 1,
+   "reqd": 1
+  },
+  {
+   "columns": 1,
+   "fieldname": "crates",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "Crates",
+   "non_negative": 1
+  },
+  {
+   "columns": 1,
+   "fieldname": "loose",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "Loose",
+   "non_negative": 1
+  },
+  {
+   "columns": 2,
+   "fieldname": "difference",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "Difference",
+   "non_negative": 1
+  },
+  {
+   "columns": 1,
+   "fieldname": "actual",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "Actual",
+   "non_negative": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2025-06-02 11:52:19.467729",
+ "modified_by": "Administrator",
+ "module": "custom_inventory_management",
+ "name": "Indent Item",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

@@ -1,0 +1,94 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "format:{route_name}-{branch}",
+ "creation": "2025-05-24 17:46:19.235051",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "route_name",
+  "route_category",
+  "start_point",
+  "column_break_hkdi",
+  "branch",
+  "delivery_points_section",
+  "delivery_points"
+ ],
+ "fields": [
+  {
+   "fieldname": "route_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Route Name",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "start_point",
+   "fieldtype": "Link",
+   "label": "Start Point",
+   "options": "Warehouse",
+   "reqd": 1
+  },
+  {
+   "fieldname": "route_category",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Route Category",
+   "options": "First Mile\nMid Mile",
+   "reqd": 1
+  },
+  {
+   "fieldname": "delivery_points_section",
+   "fieldtype": "Section Break",
+   "label": "Delivery Points"
+  },
+  {
+   "fieldname": "delivery_points",
+   "fieldtype": "Table",
+   "label": "Delivery Points",
+   "options": "Delivery Point",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_hkdi",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "branch",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Branch",
+   "options": "Branch",
+   "reqd": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "track_changes": 1,
+ "links": [],
+ "modified": "2025-05-24 17:56:33.378767",
+ "modified_by": "Administrator",
+ "module": "custom_inventory_management",
+ "name": "Delivery Route",
+ "naming_rule": "Expression",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
