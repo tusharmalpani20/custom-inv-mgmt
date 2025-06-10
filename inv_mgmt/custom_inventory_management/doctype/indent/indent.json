@@ -10,9 +10,11 @@
   "delivery_route",
   "vehicle",
   "vehicle_license_plate",
+  "driver",
   "column_break_jabd",
   "for",
   "date",
+  "company",
   "indent_items_section",
   "items"
  ],
@@ -83,13 +85,28 @@
    "label": "Items",
    "options": "Indent Item",
    "reqd": 1
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Company",
+   "options": "Company",
+   "reqd": 1
+  },
+  {
+   "fetch_from": "vehicle.employee",
+   "fieldname": "driver",
+   "fieldtype": "Link",
+   "label": "Driver",
+   "options": "Employee"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
+ "track_changes": 1,
  "links": [],
- "modified": "2025-05-24 18:22:03.057289",
+ "modified": "2025-06-06 23:03:16.151872",
  "modified_by": "Administrator",
  "module": "custom_inventory_management",
  "name": "Indent",

@@ -24,6 +24,13 @@
    "unique": 1
   },
   {
+   "fieldname": "start_point",
+   "fieldtype": "Link",
+   "label": "Start Point",
+   "options": "Warehouse",
+   "reqd": 1
+  },
+  {
    "fieldname": "route_category",
    "fieldtype": "Select",
    "in_list_view": 1,
@@ -54,19 +61,11 @@
    "label": "Branch",
    "options": "Branch",
    "reqd": 1
-  },
-  {
-   "depends_on": "eval:doc.route_category==\"Mid Mile\"",
-   "description": "For deliveries at the mid mile.",
-   "fieldname": "start_point",
-   "fieldtype": "Link",
-   "label": "Start Point",
-   "mandatory_depends_on": "eval:doc.route_category==\"Mid Mile\"",
-   "options": "Customer"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
+ "track_changes": 1,
  "links": [],
  "modified": "2025-05-24 17:56:33.378767",
  "modified_by": "Administrator",
