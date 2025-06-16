@@ -261,5 +261,11 @@ fixtures = [
         },
         {
             "doctype": "Customer Category"
+        },
+        {
+            "doctype": "Designation"
+        },
+        {
+            "doctype": "Warehouse"
         }
 ]

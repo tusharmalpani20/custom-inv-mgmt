@@ -138,15 +138,6 @@
   "docstatus": 0,
   "doctype": "Workflow State",
   "icon": "",
-  "modified": "2025-06-16 12:05:52.007545",
-  "name": "Delivery Started",
-  "style": "",
-  "workflow_state_name": "Delivery Started"
- },
- {
-  "docstatus": 0,
-  "doctype": "Workflow State",
-  "icon": "",
   "modified": "2025-02-24 06:42:00.418762",
   "name": "Sent to LMZ",
   "style": "",
@@ -183,15 +174,6 @@
   "docstatus": 0,
   "doctype": "Workflow State",
   "icon": "",
-  "modified": "2025-06-12 17:41:34.735296",
-  "name": "Delivered",
-  "style": "",
-  "workflow_state_name": "Delivered"
- },
- {
-  "docstatus": 0,
-  "doctype": "Workflow State",
-  "icon": "",
   "modified": "2024-12-20 15:31:30.699247",
   "name": "Closed",
   "style": "",
@@ -219,15 +201,6 @@
   "docstatus": 0,
   "doctype": "Workflow State",
   "icon": "",
-  "modified": "2025-06-12 17:04:22.784059",
-  "name": "Approved By Plant",
-  "style": "",
-  "workflow_state_name": "Approved By Plant"
- },
- {
-  "docstatus": 0,
-  "doctype": "Workflow State",
-  "icon": "",
   "modified": "2025-06-12 17:40:30.245822",
   "name": "In Transit",
   "style": "",
@@ -241,15 +214,6 @@
   "name": "Rejected By PLMM",
   "style": "",
   "workflow_state_name": "Rejected By PLMM"
- },
- {
-  "docstatus": 0,
-  "doctype": "Workflow State",
-  "icon": "",
-  "modified": "2025-06-12 17:04:04.327399",
-  "name": "Sent To Plant",
-  "style": "",
-  "workflow_state_name": "Sent To Plant"
  },
  {
   "docstatus": 0,
@@ -363,15 +327,6 @@
   "docstatus": 0,
   "doctype": "Workflow State",
   "icon": "",
-  "modified": "2025-02-22 18:44:38.460672",
-  "name": "Draft",
-  "style": "",
-  "workflow_state_name": "Draft"
- },
- {
-  "docstatus": 0,
-  "doctype": "Workflow State",
-  "icon": "",
   "modified": "2024-12-17 12:43:45.947008",
   "name": "Approved By PLMM",
   "style": "",
@@ -475,5 +430,50 @@
   "name": "Pending",
   "style": "",
   "workflow_state_name": "Pending"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Workflow State",
+  "icon": "",
+  "modified": "2025-06-16 12:05:52.007545",
+  "name": "Delivery Started",
+  "style": "",
+  "workflow_state_name": "Delivery Started"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Workflow State",
+  "icon": "",
+  "modified": "2025-06-12 17:04:22.784059",
+  "name": "Approved By Plant",
+  "style": "",
+  "workflow_state_name": "Approved By Plant"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Workflow State",
+  "icon": "",
+  "modified": "2025-06-12 17:04:04.327399",
+  "name": "Sent To Plant",
+  "style": "",
+  "workflow_state_name": "Sent To Plant"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Workflow State",
+  "icon": "",
+  "modified": "2025-06-12 17:41:34.735296",
+  "name": "Delivered",
+  "style": "",
+  "workflow_state_name": "Delivered"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Workflow State",
+  "icon": "",
+  "modified": "2025-02-22 18:44:38.460672",
+  "name": "Draft",
+  "style": "",
+  "workflow_state_name": "Draft"
  }
 ]
