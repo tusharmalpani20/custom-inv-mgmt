@@ -1,0 +1,350 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "field:variant_full_name",
+ "creation": "2025-06-11 17:27:00",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "basic_info_section",
+  "variant_full_name",
+  "item_link",
+  "code",
+  "category_name",
+  "category_id",
+  "brand_cd",
+  "city_cd",
+  "column_break_1",
+  "description",
+  "subject",
+  "is_published",
+  "published_at",
+  "always_available",
+  "available_from",
+  "available_upto",
+  "error_message",
+  "pricing_section",
+  "offer_price",
+  "cost_price_amount",
+  "column_break_2",
+  "cgst",
+  "sgst",
+  "igst",
+  "product_details_section",
+  "measurement",
+  "measurement_unit",
+  "packaging_type",
+  "qty_per_tray",
+  "delivery_lag_in_days",
+  "column_break_3",
+  "hsn_code",
+  "milk_quantity",
+  "height_in_cms",
+  "length_in_cms",
+  "width_in_cms",
+  "weight_in_gms",
+  "image_section",
+  "product_images",
+  "image_link",
+  "thumbnail_link",
+  "flags_section",
+  "is_combo",
+  "is_offer_variant",
+  "is_dashboard_product",
+  "no_of_items_in_variant",
+  "system_details_section",
+  "created_at",
+  "updated_at"
+ ],
+ "fields": [
+  {
+   "fieldname": "basic_info_section",
+   "fieldtype": "Section Break",
+   "label": "Basic Information"
+  },
+  {
+   "fieldname": "variant_full_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Variant Full Name",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "item_link",
+   "fieldtype": "Link",
+   "label": "Item",
+   "options": "Item"
+  },
+  {
+   "fieldname": "error_message",
+   "fieldtype": "Long Text",
+   "hidden": 1,
+   "label": "Error Message",
+   "read_only": 1
+  },
+  {
+   "fieldname": "code",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Code",
+   "reqd": 1
+  },
+  {
+   "fieldname": "category_name",
+   "fieldtype": "Data",
+   "label": "Category Name"
+  },
+  {
+   "fieldname": "category_id",
+   "fieldtype": "Int",
+   "label": "Category ID"
+  },
+  {
+   "fieldname": "brand_cd",
+   "fieldtype": "Data",
+   "label": "Brand Code"
+  },
+  {
+   "fieldname": "city_cd",
+   "fieldtype": "Data",
+   "label": "City Code"
+  },
+  {
+   "fieldname": "column_break_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "description",
+   "fieldtype": "Text Editor",
+   "label": "Description"
+  },
+  {
+   "fieldname": "subject",
+   "fieldtype": "Small Text",
+   "label": "Subject"
+  },
+  {
+   "default": "0",
+   "fieldname": "is_published",
+   "fieldtype": "Check",
+   "label": "Is Published"
+  },
+  {
+   "fieldname": "published_at",
+   "fieldtype": "Datetime",
+   "label": "Published At"
+  },
+  {
+   "default": "0",
+   "fieldname": "always_available",
+   "fieldtype": "Check",
+   "label": "Always Available"
+  },
+  {
+   "fieldname": "available_from",
+   "fieldtype": "Datetime",
+   "label": "Available From"
+  },
+  {
+   "fieldname": "available_upto",
+   "fieldtype": "Datetime",
+   "label": "Available Upto"
+  },
+  {
+   "fieldname": "pricing_section",
+   "fieldtype": "Section Break",
+   "label": "Pricing Information"
+  },
+  {
+   "fieldname": "offer_price",
+   "fieldtype": "Currency",
+   "label": "Offer Price",
+   "precision": "2"
+  },
+  {
+   "fieldname": "cost_price_amount",
+   "fieldtype": "Currency",
+   "label": "Cost Price",
+   "precision": "2"
+  },
+  {
+   "fieldname": "column_break_2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "cgst",
+   "fieldtype": "Currency",
+   "label": "CGST",
+   "precision": "2"
+  },
+  {
+   "fieldname": "sgst",
+   "fieldtype": "Currency",
+   "label": "SGST",
+   "precision": "2"
+  },
+  {
+   "fieldname": "igst",
+   "fieldtype": "Currency",
+   "label": "IGST",
+   "precision": "2"
+  },
+  {
+   "fieldname": "product_details_section",
+   "fieldtype": "Section Break",
+   "label": "Product Details"
+  },
+  {
+   "fieldname": "measurement",
+   "fieldtype": "Float",
+   "label": "Measurement"
+  },
+  {
+   "fieldname": "measurement_unit",
+   "fieldtype": "Data",
+   "label": "Measurement Unit"
+  },
+  {
+   "fieldname": "packaging_type",
+   "fieldtype": "Data",
+   "label": "Packaging Type"
+  },
+  {
+   "fieldname": "qty_per_tray",
+   "fieldtype": "Int",
+   "label": "Quantity Per Tray"
+  },
+  {
+   "fieldname": "delivery_lag_in_days",
+   "fieldtype": "Int",
+   "label": "Delivery Lag in Days"
+  },
+  {
+   "fieldname": "column_break_3",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "hsn_code",
+   "fieldtype": "Data",
+   "label": "HSN Code"
+  },
+  {
+   "fieldname": "milk_quantity",
+   "fieldtype": "Float",
+   "label": "Milk Quantity"
+  },
+  {
+   "fieldname": "height_in_cms",
+   "fieldtype": "Float",
+   "label": "Height (cms)"
+  },
+  {
+   "fieldname": "length_in_cms",
+   "fieldtype": "Float",
+   "label": "Length (cms)"
+  },
+  {
+   "fieldname": "width_in_cms",
+   "fieldtype": "Float",
+   "label": "Width (cms)"
+  },
+  {
+   "fieldname": "weight_in_gms",
+   "fieldtype": "Float",
+   "label": "Weight (gms)"
+  },
+  {
+   "fieldname": "image_section",
+   "fieldtype": "Section Break",
+   "label": "Images"
+  },
+  {
+   "fieldname": "product_images",
+   "fieldtype": "Attach",
+   "label": "Product Images"
+  },
+  {
+   "fieldname": "image_link",
+   "fieldtype": "Data",
+   "label": "Image Link"
+  },
+  {
+   "fieldname": "thumbnail_link",
+   "fieldtype": "Data",
+   "label": "Thumbnail Link"
+  },
+  {
+   "fieldname": "flags_section",
+   "fieldtype": "Section Break",
+   "label": "Flags"
+  },
+  {
+   "default": "0",
+   "fieldname": "is_combo",
+   "fieldtype": "Check",
+   "label": "Is Combo"
+  },
+  {
+   "default": "0",
+   "fieldname": "is_offer_variant",
+   "fieldtype": "Check",
+   "label": "Is Offer Variant"
+  },
+  {
+   "default": "0",
+   "fieldname": "is_dashboard_product",
+   "fieldtype": "Check",
+   "label": "Is Dashboard Product"
+  },
+  {
+   "fieldname": "no_of_items_in_variant",
+   "fieldtype": "Int",
+   "label": "Number of Items in Variant"
+  },
+  {
+   "fieldname": "system_details_section",
+   "fieldtype": "Section Break",
+   "label": "System Details"
+  },
+  {
+   "fieldname": "created_at",
+   "fieldtype": "Datetime",
+   "label": "Created At",
+   "read_only": 1
+  },
+  {
+   "fieldname": "updated_at",
+   "fieldtype": "Datetime",
+   "label": "Updated At",
+   "read_only": 1
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2025-06-11 19:41:51.583018",
+ "modified_by": "Administrator",
+ "module": "custom_inventory_management",
+ "name": "SF Product Master",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

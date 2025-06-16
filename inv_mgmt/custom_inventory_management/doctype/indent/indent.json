@@ -15,6 +15,10 @@
   "for",
   "date",
   "company",
+  "trip_detail_section",
+  "trip_started_at",
+  "column_break_trip",
+  "trip_started_by",
   "indent_items_section",
   "items"
  ],
@@ -99,6 +103,29 @@
    "fieldtype": "Link",
    "label": "Driver",
    "options": "Employee"
+  },
+  {
+   "fieldname": "trip_detail_section",
+   "fieldtype": "Section Break",
+   "label": "Trip Detail",
+   "depends_on": "eval:doc.workflow_state == 'Delivery Started'"
+  },
+  {
+   "fieldname": "trip_started_at",
+   "fieldtype": "Datetime",
+   "label": "Started At",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_trip",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "trip_started_by",
+   "fieldtype": "Link",
+   "label": "Started By",
+   "options": "Employee",
+   "read_only": 1
   }
  ],
  "grid_page_length": 50,
