@@ -55,6 +55,7 @@
    "fieldtype": "Column Break"
   },
   {
+   "fetch_from": "start_point.custom_branch",
    "fieldname": "branch",
    "fieldtype": "Link",
    "in_list_view": 1,
@@ -65,9 +66,8 @@
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
- "track_changes": 1,
  "links": [],
- "modified": "2025-05-24 17:56:33.378767",
+ "modified": "2025-06-11 22:35:03.060314",
  "modified_by": "Administrator",
  "module": "custom_inventory_management",
  "name": "Delivery Route",
@@ -90,5 +90,6 @@
  "row_format": "Dynamic",
  "sort_field": "modified",
  "sort_order": "DESC",
- "states": []
+ "states": [],
+ "track_changes": 1
 }

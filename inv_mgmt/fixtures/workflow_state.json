@@ -1,0 +1,479 @@
+[
+ {
+  "docstatus": 0,
+  "doctype": "Workflow State",
+  "icon": "",
+  "modified": "2024-12-17 12:46:11.506505",
+  "name": "Review",
+  "style": "",
+  "workflow_state_name": "Review"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Workflow State",
+  "icon": "",
+  "modified": "2025-02-22 18:52:20.317713",
+  "name": "Reject By PLMM",
+  "style": "",
+  "workflow_state_name": "Reject By PLMM"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Workflow State",
+  "icon": "",
+  "modified": "2025-02-24 06:40:45.875147",
+  "name": "Sen to Zonal Manager",
+  "style": "",
+  "workflow_state_name": "Sen to Zonal Manager"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Workflow State",
+  "icon": "",
+  "modified": "2025-02-24 06:43:12.385291",
+  "name": "Approved by LMZ",
+  "style": "",
+  "workflow_state_name": "Approved by LMZ"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Workflow State",
+  "icon": "",
+  "modified": "2025-02-24 12:05:36.510160",
+  "name": "Pending L2 Approval",
+  "style": "",
+  "workflow_state_name": "Pending L2 Approval"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Workflow State",
+  "icon": "",
+  "modified": "2025-02-24 12:12:19.502724",
+  "name": "Reject By L1(MM)",
+  "style": "",
+  "workflow_state_name": "Reject By L1(MM)"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Workflow State",
+  "icon": "",
+  "modified": "2025-02-24 12:13:23.969945",
+  "name": "Reject By L2(LM)",
+  "style": "",
+  "workflow_state_name": "Reject By L2(LM)"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Workflow State",
+  "icon": "",
+  "modified": "2025-02-24 12:13:55.566086",
+  "name": "Reject By L3(LM)",
+  "style": "",
+  "workflow_state_name": "Reject By L3(LM)"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Workflow State",
+  "icon": "",
+  "modified": "2025-02-24 12:14:44.582457",
+  "name": "Pending L2(MM)",
+  "style": "",
+  "workflow_state_name": "Pending L2(MM)"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Workflow State",
+  "icon": "",
+  "modified": "2025-02-24 12:15:08.399454",
+  "name": "Reject By L2(MM)",
+  "style": "",
+  "workflow_state_name": "Reject By L2(MM)"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Workflow State",
+  "icon": "",
+  "modified": "2025-02-24 12:15:22.590176",
+  "name": "Pending L3(MM)",
+  "style": "",
+  "workflow_state_name": "Pending L3(MM)"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Workflow State",
+  "icon": "",
+  "modified": "2025-02-24 12:15:38.439180",
+  "name": "Reject By L3(MM)",
+  "style": "",
+  "workflow_state_name": "Reject By L3(MM)"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Workflow State",
+  "icon": "",
+  "modified": "2025-02-24 12:16:07.414943",
+  "name": "Approved By L2(LM)",
+  "style": "",
+  "workflow_state_name": "Approved By L2(LM)"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Workflow State",
+  "icon": "",
+  "modified": "2025-02-24 12:16:24.530117",
+  "name": "Approved By L3(MM)",
+  "style": "",
+  "workflow_state_name": "Approved By L3(MM)"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Workflow State",
+  "icon": "",
+  "modified": "2025-02-24 12:33:01.314691",
+  "name": "Pending L1 Approval",
+  "style": "",
+  "workflow_state_name": "Pending L1 Approval"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Workflow State",
+  "icon": "",
+  "modified": "2025-06-16 12:05:52.007545",
+  "name": "Delivery Started",
+  "style": "",
+  "workflow_state_name": "Delivery Started"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Workflow State",
+  "icon": "",
+  "modified": "2025-02-24 06:42:00.418762",
+  "name": "Sent to LMZ",
+  "style": "",
+  "workflow_state_name": "Sent to LMZ"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Workflow State",
+  "icon": "",
+  "modified": "2025-02-24 12:12:04.507733",
+  "name": "Pending L1(MM)",
+  "style": "",
+  "workflow_state_name": "Pending L1(MM)"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Workflow State",
+  "icon": "",
+  "modified": "2025-02-24 12:11:48.044076",
+  "name": "Reject  By L1(LM)",
+  "style": "",
+  "workflow_state_name": "Reject  By L1(LM)"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Workflow State",
+  "icon": "",
+  "modified": "2025-06-12 17:04:44.549527",
+  "name": "Rejected By Plant",
+  "style": "",
+  "workflow_state_name": "Rejected By Plant"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Workflow State",
+  "icon": "",
+  "modified": "2025-06-12 17:41:34.735296",
+  "name": "Delivered",
+  "style": "",
+  "workflow_state_name": "Delivered"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Workflow State",
+  "icon": "",
+  "modified": "2024-12-20 15:31:30.699247",
+  "name": "Closed",
+  "style": "",
+  "workflow_state_name": "Closed"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Workflow State",
+  "icon": "",
+  "modified": "2025-03-17 15:50:45.338646",
+  "name": "Payment Closed",
+  "style": "Success",
+  "workflow_state_name": "Payment Closed"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Workflow State",
+  "icon": "",
+  "modified": "2025-02-24 12:13:36.148731",
+  "name": "Pending L3(LM)",
+  "style": "",
+  "workflow_state_name": "Pending L3(LM)"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Workflow State",
+  "icon": "",
+  "modified": "2025-06-12 17:04:22.784059",
+  "name": "Approved By Plant",
+  "style": "",
+  "workflow_state_name": "Approved By Plant"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Workflow State",
+  "icon": "",
+  "modified": "2025-06-12 17:40:30.245822",
+  "name": "In Transit",
+  "style": "",
+  "workflow_state_name": "In Transit"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Workflow State",
+  "icon": "",
+  "modified": "2025-02-22 18:52:57.993944",
+  "name": "Rejected By PLMM",
+  "style": "",
+  "workflow_state_name": "Rejected By PLMM"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Workflow State",
+  "icon": "",
+  "modified": "2025-06-12 17:04:04.327399",
+  "name": "Sent To Plant",
+  "style": "",
+  "workflow_state_name": "Sent To Plant"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Workflow State",
+  "icon": "",
+  "modified": "2025-03-17 13:11:44.516100",
+  "name": "Rejected By Finance",
+  "style": "",
+  "workflow_state_name": "Rejected By Finance"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Workflow State",
+  "icon": "",
+  "modified": "2025-03-17 15:44:01.883587",
+  "name": "Rejected By PAN India Manager",
+  "style": "",
+  "workflow_state_name": "Rejected By PAN India Manager"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Workflow State",
+  "icon": "",
+  "modified": "2024-12-17 12:46:49.705214",
+  "name": "Review(LMM)",
+  "style": "",
+  "workflow_state_name": "Review(LMM)"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Workflow State",
+  "icon": "",
+  "modified": "2024-12-17 12:47:03.053528",
+  "name": "Review(LMH)",
+  "style": "",
+  "workflow_state_name": "Review(LMH)"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Workflow State",
+  "icon": "",
+  "modified": "2024-12-17 12:42:51.770287",
+  "name": "Rejected By LMH",
+  "style": "",
+  "workflow_state_name": "Rejected By LMH"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Workflow State",
+  "icon": "",
+  "modified": "2025-03-17 15:39:02.074371",
+  "name": "Pending Finance Approval",
+  "style": "",
+  "workflow_state_name": "Pending Finance Approval"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Workflow State",
+  "icon": "",
+  "modified": "2025-03-17 15:50:35.020648",
+  "name": "Approved By Finance",
+  "style": "Info",
+  "workflow_state_name": "Approved By Finance"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Workflow State",
+  "icon": "",
+  "modified": "2024-12-17 12:42:30.115132",
+  "name": "Approved By LMH",
+  "style": "",
+  "workflow_state_name": "Approved By LMH"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Workflow State",
+  "icon": "",
+  "modified": "2025-02-22 18:45:07.552371",
+  "name": "Sent To LMM",
+  "style": "",
+  "workflow_state_name": "Sent To LMM"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Workflow State",
+  "icon": "",
+  "modified": "2025-02-22 18:45:24.468616",
+  "name": "Sent To PLMM",
+  "style": "",
+  "workflow_state_name": "Sent To PLMM"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Workflow State",
+  "icon": "",
+  "modified": "2025-03-17 15:45:46.637259",
+  "name": "Rejected By City Manager",
+  "style": "Warning",
+  "workflow_state_name": "Rejected By City Manager"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Workflow State",
+  "icon": "",
+  "modified": "2024-12-17 12:43:23.784746",
+  "name": "Rejected By LMM",
+  "style": "",
+  "workflow_state_name": "Rejected By LMM"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Workflow State",
+  "icon": "",
+  "modified": "2025-02-22 18:44:38.460672",
+  "name": "Draft",
+  "style": "",
+  "workflow_state_name": "Draft"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Workflow State",
+  "icon": "",
+  "modified": "2024-12-17 12:43:45.947008",
+  "name": "Approved By PLMM",
+  "style": "",
+  "workflow_state_name": "Approved By PLMM"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Workflow State",
+  "icon": "",
+  "modified": "2025-03-17 15:50:26.058661",
+  "name": "Approved By PAN India Manager",
+  "style": "Primary",
+  "workflow_state_name": "Approved By PAN India Manager"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Workflow State",
+  "icon": "",
+  "modified": "2025-03-17 15:45:20.477399",
+  "name": "Approved By LMM",
+  "style": "Primary",
+  "workflow_state_name": "Approved By LMM"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Workflow State",
+  "icon": "",
+  "modified": "2025-03-17 15:34:45.297817",
+  "name": "Approved By City Manager",
+  "style": "",
+  "workflow_state_name": "Approved By City Manager"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Workflow State",
+  "icon": "",
+  "modified": "2025-02-24 12:12:51.611693",
+  "name": "Pending L2(LM)",
+  "style": "",
+  "workflow_state_name": "Pending L2(LM)"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Workflow State",
+  "icon": "remove",
+  "modified": "2024-11-30 18:18:38.977759",
+  "name": "Rejected",
+  "style": "Danger",
+  "workflow_state_name": "Rejected"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Workflow State",
+  "icon": "",
+  "modified": "2024-12-18 18:10:31.530349",
+  "name": "Cancelled",
+  "style": "",
+  "workflow_state_name": "Cancelled"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Workflow State",
+  "icon": "",
+  "modified": "2025-03-01 11:44:46.165185",
+  "name": "Fin Approval",
+  "style": "",
+  "workflow_state_name": "Fin Approval"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Workflow State",
+  "icon": "",
+  "modified": "2024-12-18 18:10:56.306493",
+  "name": "Submitted",
+  "style": "Info",
+  "workflow_state_name": "Submitted"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Workflow State",
+  "icon": "",
+  "modified": "2025-02-24 12:11:24.359741",
+  "name": "Pending L1 Approval(LM)",
+  "style": "",
+  "workflow_state_name": "Pending L1 Approval(LM)"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Workflow State",
+  "icon": "ok-sign",
+  "modified": "2024-11-30 18:18:38.976309",
+  "name": "Approved",
+  "style": "Success",
+  "workflow_state_name": "Approved"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Workflow State",
+  "icon": "question-sign",
+  "modified": "2024-11-30 18:18:38.974831",
+  "name": "Pending",
+  "style": "",
+  "workflow_state_name": "Pending"
+ }
+]

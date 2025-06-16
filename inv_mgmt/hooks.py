@@ -243,5 +243,23 @@ app_license = "mit"
 # }
 
 fixtures = [
-    "Customer Category"
+
+        {
+            "doctype": "Workflow"
+        },
+		{
+			"doctype": "Workflow State"
+		},
+        {
+            "doctype": "Workflow Action Master"
+        },
+        {
+            "doctype": "Role"
+        },
+        {
+            "doctype": "Role Profile"
+        },
+        {
+            "doctype": "Customer Category"
+        }
 ]

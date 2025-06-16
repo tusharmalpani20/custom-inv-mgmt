@@ -5,10 +5,10 @@ import base64
 from custom_app_api.custom_api.api_end_points.attendance_api import verify_dp_token, handle_error_response
 from typing import Dict, Any
 
-@frappe.whitelist(allow_guest=True, methods=["POST"])
+@frappe.whitelist(allow_guest=True, methods=["PUT"])
 def acknowledge_delivery_note() -> Dict[str, Any]:
     """
-    Updates delivery note with receiver's signature and acknowledgment time, then submits it
+    Updates delivery note with receiver's signature and acknowledgment time, then changes workflow state to Delivered
     Required header: Authorization Bearer token
     Required body params:
         delivery_note: str - The delivery note ID
@@ -151,11 +151,13 @@ def acknowledge_delivery_note() -> Dict[str, Any]:
         try:
             # Update delivery note
             current_time = frappe.utils.now_datetime()
+            
+            # Apply workflow action
+            frappe.model.workflow.apply_workflow(delivery_note, "Deliver")
+            
+            # Update additional fields
             delivery_note.db_set('custom_receiver_signature', file_doc.file_url)
             delivery_note.db_set('custom_receiving_time', current_time)
-            
-            # Submit the delivery note
-            delivery_note.submit()
             
             # Commit transaction
             frappe.db.commit()
@@ -164,24 +166,35 @@ def acknowledge_delivery_note() -> Dict[str, Any]:
             return {
                 "success": True,
                 "status": "success",
-                "message": "Delivery note acknowledged and submitted successfully",
+                "message": "Delivery note acknowledged successfully",
                 "code": "ACKNOWLEDGMENT_SAVED",
                 "data": {
                     "delivery_note": delivery_note_id,
                     "signature_url": file_doc.file_url,
-                    "receiving_time": str(current_time)
+                    "receiving_time": str(current_time),
+                    "workflow_state": delivery_note.workflow_state
                 },
                 "http_status_code": 200
             }
 
+        except frappe.exceptions.WorkflowTransitionError as e:
+            frappe.db.rollback()
+            frappe.local.response['http_status_code'] = 400
+            return {
+                "success": False,
+                "status": "error",
+                "message": str(e),
+                "code": "WORKFLOW_TRANSITION_ERROR",
+                "http_status_code": 400
+            }
         except Exception as e:
             frappe.db.rollback()
             frappe.local.response['http_status_code'] = 500
             return {
                 "success": False,
                 "status": "error",
-                "message": f"Failed to submit delivery note: {str(e)}",
-                "code": "SUBMISSION_FAILED",
+                "message": f"Failed to acknowledge delivery note: {str(e)}",
+                "code": "ACKNOWLEDGMENT_FAILED",
                 "http_status_code": 500
             }
 
@@ -193,3 +206,108 @@ def acknowledge_delivery_note() -> Dict[str, Any]:
         )
         frappe.local.response['http_status_code'] = 500
         return handle_error_response(e, "Error processing delivery note acknowledgment")
+
+
+@frappe.whitelist(allow_guest=True, methods=["GET"])
+def get_delivery_note_details(delivery_note: str) -> Dict[str, Any]:
+    """
+    Get delivery note details with crate calculations for items
+    Required header: Authorization Bearer token
+    Required params:
+        delivery_note: str - The delivery note ID
+    Returns:
+        Dict containing delivery note details and items with crate calculations
+    """
+    try:
+        # Verify authorization
+        is_valid, result = verify_dp_token(frappe.request.headers)
+        if not is_valid:
+            frappe.local.response['http_status_code'] = 401
+            return result
+
+        # Get delivery note document
+        try:
+            delivery_note_doc = frappe.get_doc("Delivery Note", delivery_note)
+        except frappe.DoesNotExistError:
+            frappe.local.response['http_status_code'] = 404
+            return {
+                "success": False,
+                "status": "error",
+                "message": f"Delivery Note {delivery_note} not found",
+                "code": "DELIVERY_NOTE_NOT_FOUND",
+                "http_status_code": 404
+            }
+
+        # Get all item codes from delivery note items
+        item_codes = [item.item_code for item in delivery_note_doc.items]
+
+        # Fetch crate conversion factors for all items in one query
+        crate_conversions = frappe.get_all(
+            "UOM Conversion Detail",
+            filters={
+                "parent": ["in", item_codes],
+                "uom": "Crate"
+            },
+            fields=["parent", "conversion_factor"],
+            as_list=False
+        )
+
+        # Create a mapping of item_code to conversion factor
+        conversion_map = {
+            conv.parent: conv.conversion_factor 
+            for conv in crate_conversions
+        }
+
+        # Process items with crate calculations
+        items = []
+        for item in delivery_note_doc.items:
+            conversion_factor = conversion_map.get(item.item_code, 0)
+            qty = float(item.qty)
+
+            if conversion_factor:
+                crates = int(qty // conversion_factor)
+                loose = qty - (crates * conversion_factor)
+            else:
+                crates = 0
+                loose = qty
+
+            items.append({
+                "item_code": item.item_code,
+                "item_name": item.item_name,
+                "qty": qty,
+                "stock_uom": item.stock_uom,
+                "crates": crates,
+                "loose": loose,
+                "has_crate_conversion": bool(conversion_factor),
+                "conversion_factor": conversion_factor
+            })
+
+        # Prepare response
+        response = {
+            "success": True,
+            "status": "success",
+            "message": "Delivery note details fetched successfully",
+            "code": "DETAILS_FETCHED",
+            "data": {
+                "delivery_note": delivery_note,
+                "customer": delivery_note_doc.customer,
+                "customer_name": delivery_note_doc.customer_name,
+                "posting_date": str(delivery_note_doc.posting_date),
+                "status": delivery_note_doc.status,
+                "docstatus": delivery_note_doc.docstatus,
+                "workflow_state": delivery_note_doc.workflow_state,
+                "items": items
+            },
+            "http_status_code": 200
+        }
+
+        frappe.local.response['http_status_code'] = 200
+        return response
+
+    except Exception as e:
+        frappe.log_error(
+            title="Get Delivery Note Details Error",
+            message=f"Error: {str(e)}\nTraceback: {frappe.get_traceback()}"
+        )
+        frappe.local.response['http_status_code'] = 500
+        return handle_error_response(e, "Error fetching delivery note details")
