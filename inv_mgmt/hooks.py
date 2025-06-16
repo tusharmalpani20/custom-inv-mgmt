@@ -263,7 +263,10 @@ fixtures = [
             "doctype": "Customer Category"
         },
         {
-            "doctype": "Designation"
+            "doctype": "Designation",
+            "filters": {
+                "custom_grade" : ["is", "set"]
+            }
         },
         {
             "doctype": "Warehouse"
