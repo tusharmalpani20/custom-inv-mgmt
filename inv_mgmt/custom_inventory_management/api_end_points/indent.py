@@ -48,10 +48,10 @@ def get_driver_delivery_route() -> Dict[str, Any]:
         # Check if indent is in correct workflow state
         # "Approved By Plant"
         if indent.workflow_state not in ["Delivery Started"]:
-            frappe.local.response['http_status_code'] = 400
+            frappe.local.response['http_status_code'] = 200
             return {
-                "success": False,
-                "status": "error",
+                "success": True,
+                "status": "success",
                 # "message": "Delivery route details are only available after plant approval",
                 # "code": "INVALID_WORKFLOW_STATE",
                 "message": "Data fetched successfully",
@@ -59,7 +59,7 @@ def get_driver_delivery_route() -> Dict[str, Any]:
                 "data": {
                     "indent": indent
                 },
-                "http_status_code": 400
+                "http_status_code": 200
             }
         
         # Get delivery route info
