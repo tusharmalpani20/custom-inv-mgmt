@@ -149,14 +149,22 @@ class DeliveryIssueNote(Document):
                     .format(item.idx)
                 )
 
-    def on_submit(self):
+    def before_submit(self):
         """
-        Handle document submission:
+        Handle operations before document submission:
         1. Validates quantities one final time
         2. Sets default quantities for certain fields
+        3. Creates stock entries for missing and damaged items
         """
-        self.validate_quantities()  # Additional validation on submit
+        self.validate_quantities()  # Additional validation before submit
         self.set_default_quantities()
+        self.create_stock_entry()
+
+    def on_submit(self):
+        """
+        Handle document submission. All main operations are done in before_submit.
+        """
+        pass
 
     def set_default_quantities(self):
         """
@@ -243,3 +251,102 @@ class DeliveryIssueNote(Document):
             item.missing_qty = 0
             item.damaged_qty = 0
             item.excess_qty = 0
+
+    def create_stock_entry(self):
+        """
+        Creates separate stock entries on submission to handle:
+        1. Moving missing items to 'Missed Items - SFPL' warehouse
+        2. Moving damaged items to 'Damaged Items - SFPL' warehouse
+        
+        The source warehouse is determined by:
+        - For internal customers: uses set_target_warehouse from delivery note
+        - For non-internal customers: uses set_warehouse from delivery note
+        """
+        if not (any(item.missing_qty for item in self.items) or 
+                any(item.damaged_qty for item in self.items)):
+            return
+
+        # Get delivery note details
+        delivery_note = frappe.get_doc("Delivery Note", self.delivery_note)
+        
+        # Determine source warehouse based on customer type
+        source_warehouse = (delivery_note.set_target_warehouse 
+                          if delivery_note.is_internal_customer 
+                          else delivery_note.set_warehouse)
+
+        # Get default company from Global Defaults
+        default_company = frappe.get_cached_value('Global Defaults', None, 'default_company')
+        if not default_company:
+            frappe.throw(_("Please set default company in Global Defaults"))
+
+        # Create stock entry for missing items
+        missing_items = [item for item in self.items if item.missing_qty]
+        if missing_items:
+            missing_stock_entry = frappe.new_doc("Stock Entry")
+            missing_stock_entry.stock_entry_type = "Material Transfer"
+            missing_stock_entry.company = default_company
+            missing_stock_entry.from_warehouse = source_warehouse
+            missing_stock_entry.to_warehouse = "Missed Items - SFPL"
+
+            for item in missing_items:
+                missing_stock_entry.append("items", {
+                    "item_code": item.item_code,
+                    "qty": item.missing_qty
+                })
+
+            missing_stock_entry.save()
+            missing_stock_entry.submit()
+            # Append to child table using standard Frappe way
+            self.append("created_stock_entry_list", {
+                "stock_entry": missing_stock_entry.name
+            })
+            
+            frappe.msgprint(_("Stock Entry {0} created for missing items").format(missing_stock_entry.name))
+
+        # Create stock entry for damaged items
+        damaged_items = [item for item in self.items if item.damaged_qty]
+        if damaged_items:
+            damaged_stock_entry = frappe.new_doc("Stock Entry")
+            damaged_stock_entry.stock_entry_type = "Material Transfer"
+            damaged_stock_entry.company = default_company
+            damaged_stock_entry.from_warehouse = source_warehouse
+            damaged_stock_entry.to_warehouse = "Damaged Items - SFPL"
+
+            for item in damaged_items:
+                damaged_stock_entry.append("items", {
+                    "item_code": item.item_code,
+                    "qty": item.damaged_qty
+                })
+
+            damaged_stock_entry.save()
+            damaged_stock_entry.submit()
+            
+            # Append to child table using standard Frappe way
+            self.append("created_stock_entry_list", {
+                "stock_entry": damaged_stock_entry.name
+            })
+            
+            frappe.msgprint(_("Stock Entry {0} created for damaged items").format(damaged_stock_entry.name))
+
+    def on_cancel(self):
+        """
+        Handle document cancellation:
+        1. Cancel all linked stock entries
+        """
+        self.cancel_linked_stock_entries()
+
+    def cancel_linked_stock_entries(self):
+        """
+        Cancels all stock entries linked to this document.
+        Shows appropriate messages and handles errors.
+        """
+        for se in self.created_stock_entry_list:
+            if se.stock_entry:
+                stock_entry = frappe.get_doc("Stock Entry", se.stock_entry)
+                if stock_entry.docstatus == 1:  # Only cancel if submitted
+                    try:
+                        stock_entry.cancel()
+                        frappe.msgprint(_("Stock Entry {0} cancelled").format(stock_entry.name))
+                    except Exception as e:
+                        frappe.throw(_("Failed to cancel Stock Entry {0}: {1}").format(
+                            stock_entry.name, str(e)))
