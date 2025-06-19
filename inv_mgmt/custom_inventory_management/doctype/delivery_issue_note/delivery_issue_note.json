@@ -1,7 +1,7 @@
 {
  "actions": [],
  "allow_rename": 1,
- "autoname": "format:DIN-{YY}-{MM}-{DD}-####",
+ "autoname": "format:DIN-{YY}-{MM}-{DD}-{####}",
  "creation": "2025-06-09 15:14:23.343798",
  "doctype": "DocType",
  "engine": "InnoDB",
@@ -122,7 +122,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-06-19 11:52:35.449063",
+ "modified": "2025-06-19 11:57:10.148738",
  "modified_by": "Administrator",
  "module": "custom_inventory_management",
  "name": "Delivery Issue Note",
