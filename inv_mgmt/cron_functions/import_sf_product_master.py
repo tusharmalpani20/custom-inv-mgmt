@@ -63,6 +63,9 @@ def import_sf_product_master():
         if not products:
             frappe.throw("No products found in the API response")
 
+        #print the count of products
+        frappe.log(f"Total products: {len(products)}")
+
         success_count = 0
         error_count = 0
         errors = []
@@ -76,15 +79,17 @@ def import_sf_product_master():
 
                 existing_product = frappe.get_all(
                     "SF Product Master",
-                    filters={"variant_full_name": variant_full_name},
+                    filters={"sf_product_id": product.get("id")},
                     fields=["name"]
                 )
 
                 product_doc = None
                 if existing_product:
                     product_doc = frappe.get_doc("SF Product Master", existing_product[0].name)
+                    print(f"Product already exists: {variant_full_name}")
                 else:
                     product_doc = frappe.new_doc("SF Product Master")
+                    print(f"Product does not exist: {variant_full_name}")
 
                 # Format datetime fields
                 published_at = format_datetime(product.get("published_at"))
@@ -96,6 +101,7 @@ def import_sf_product_master():
                 # Map fields from API response to DocType
                 product_doc.update({
                     "variant_full_name": variant_full_name,
+                    "sf_product_id": product.get("id"),
                     "code": product.get("code"),
                     "category_name": product.get("category", {}).get("name"),
                     "category_id": product.get("category", {}).get("id"),
@@ -133,6 +139,13 @@ def import_sf_product_master():
                     "created_at": created_at,
                     "updated_at": updated_at
                 })
+
+                if product.get("is_combo", 0) == 1:
+                    combo_components = product.get("combos_components")
+                    if combo_components:
+                        product_doc.combo_detail = json.dumps(combo_components)
+                    else:
+                        product_doc.combo_detail = None
 
                 # Clear any previous error message
                 product_doc.error_message = ""
