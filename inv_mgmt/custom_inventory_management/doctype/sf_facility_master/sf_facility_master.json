@@ -71,14 +71,14 @@
   },
   {
    "fieldname": "address_text",
-   "fieldtype": "Data",
+   "fieldtype": "Small Text",
    "label": "Address Text"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-07-15 17:13:58.997646",
+ "modified": "2025-07-15 18:00:54.293381",
  "modified_by": "Administrator",
  "module": "custom_inventory_management",
  "name": "SF Facility Master",
