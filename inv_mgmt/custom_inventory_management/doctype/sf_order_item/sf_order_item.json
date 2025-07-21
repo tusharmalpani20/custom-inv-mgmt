@@ -1,0 +1,76 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "format:SFOI-{parent}-{###}",
+ "creation": "2025-07-15 16:23:59.361515",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "item_id",
+  "item_name",
+  "quantity",
+  "unit_price",
+  "total_price",
+  "sf_product_master"
+ ],
+ "fields": [
+  {
+   "columns": 1,
+   "fieldname": "item_id",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Item ID"
+  },
+  {
+   "columns": 1,
+   "fieldname": "item_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Item Name"
+  },
+  {
+   "columns": 1,
+   "fieldname": "quantity",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "Quantity"
+  },
+  {
+   "columns": 1,
+   "fieldname": "unit_price",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "Unit Price"
+  },
+  {
+   "columns": 1,
+   "fieldname": "total_price",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "Total Price"
+  },
+  {
+   "fieldname": "sf_product_master",
+   "fieldtype": "Link",
+   "label": "SF Product Master",
+   "options": "SF Product Master",
+   "read_only": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2025-07-15 17:00:33.296294",
+ "modified_by": "Administrator",
+ "module": "custom_inventory_management",
+ "name": "SF Order Item",
+ "naming_rule": "Expression",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

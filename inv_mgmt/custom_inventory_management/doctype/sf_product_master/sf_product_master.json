@@ -1,13 +1,14 @@
 {
  "actions": [],
  "allow_rename": 1,
- "autoname": "field:variant_full_name",
+ "autoname": "field:sf_product_id",
  "creation": "2025-06-11 17:27:00",
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
   "basic_info_section",
   "variant_full_name",
+  "sf_product_id",
   "item_link",
   "code",
   "category_name",
@@ -52,6 +53,10 @@
   "is_offer_variant",
   "is_dashboard_product",
   "no_of_items_in_variant",
+  "column_break_nhby",
+  "combo_detail",
+  "combo_details_section",
+  "combo_items",
   "system_details_section",
   "created_at",
   "updated_at"
@@ -66,9 +71,9 @@
    "fieldname": "variant_full_name",
    "fieldtype": "Data",
    "in_list_view": 1,
+   "in_standard_filter": 1,
    "label": "Variant Full Name",
-   "reqd": 1,
-   "unique": 1
+   "reqd": 1
   },
   {
    "fieldname": "item_link",
@@ -318,11 +323,40 @@
    "fieldtype": "Datetime",
    "label": "Updated At",
    "read_only": 1
+  },
+  {
+   "fieldname": "sf_product_id",
+   "fieldtype": "Data",
+   "label": "SF Product ID",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "column_break_nhby",
+   "fieldtype": "Column Break"
+  },
+  {
+   "depends_on": "eval:doc.is_combo",
+   "fieldname": "combo_detail",
+   "fieldtype": "JSON",
+   "label": "Combo Details"
+  },
+  {
+   "depends_on": "eval:doc.is_combo",
+   "fieldname": "combo_details_section",
+   "fieldtype": "Section Break",
+   "label": "Combo Details"
+  },
+  {
+   "fieldname": "combo_items",
+   "fieldtype": "Table",
+   "label": "Combo Items",
+   "options": "SF Product Combo Details"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-06-11 19:41:51.583018",
+ "modified": "2025-07-15 22:49:52.447163",
  "modified_by": "Administrator",
  "module": "custom_inventory_management",
  "name": "SF Product Master",

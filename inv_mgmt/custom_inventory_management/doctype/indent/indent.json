@@ -99,16 +99,17 @@
   },
   {
    "fetch_from": "vehicle.employee",
+   "fetch_if_empty": 1,
    "fieldname": "driver",
    "fieldtype": "Link",
    "label": "Driver",
    "options": "Employee"
   },
   {
+   "depends_on": "eval:doc.workflow_state == 'Delivery Started'",
    "fieldname": "trip_detail_section",
    "fieldtype": "Section Break",
-   "label": "Trip Detail",
-   "depends_on": "eval:doc.workflow_state == 'Delivery Started'"
+   "label": "Trip Detail"
   },
   {
    "fieldname": "trip_started_at",
@@ -131,9 +132,8 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
- "track_changes": 1,
  "links": [],
- "modified": "2025-06-06 23:03:16.151872",
+ "modified": "2025-06-19 12:30:27.619764",
  "modified_by": "Administrator",
  "module": "custom_inventory_management",
  "name": "Indent",
@@ -157,5 +157,6 @@
  "row_format": "Dynamic",
  "sort_field": "modified",
  "sort_order": "DESC",
- "states": []
+ "states": [],
+ "track_changes": 1
 }

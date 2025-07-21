@@ -1,0 +1,238 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "format:SFOM-{order_type}-{order_date}-{#######}",
+ "creation": "2025-07-15 15:33:19.480759",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "order_id",
+  "column_break_psts",
+  "order_type",
+  "order_date",
+  "customer_detail_section",
+  "customer_id",
+  "customer_name",
+  "column_break_nmxz",
+  "customer_gstin",
+  "customer_billing_name",
+  "customer_category",
+  "delivery_location_section",
+  "delivery_latitude",
+  "delivery_longitude",
+  "delivery_address",
+  "facility_details_section",
+  "plant",
+  "column_break_mjlk",
+  "darkstore",
+  "invoice_details_section",
+  "invoice_number",
+  "invoice_date",
+  "column_break_sjfk",
+  "cgst",
+  "sgst",
+  "igst",
+  "total_tax",
+  "column_break_aycs",
+  "subtotal",
+  "total_amount",
+  "currency",
+  "order_item_list_section",
+  "item_table"
+ ],
+ "fields": [
+  {
+   "fieldname": "order_type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Order Type",
+   "options": "\nB2B\nD2C"
+  },
+  {
+   "fieldname": "order_id",
+   "fieldtype": "Data",
+   "label": "Order ID"
+  },
+  {
+   "fieldname": "column_break_psts",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "order_date",
+   "fieldtype": "Date",
+   "label": "Order Date"
+  },
+  {
+   "fieldname": "customer_detail_section",
+   "fieldtype": "Section Break",
+   "label": "Customer Detail"
+  },
+  {
+   "fieldname": "customer_id",
+   "fieldtype": "Data",
+   "label": "ID"
+  },
+  {
+   "fieldname": "customer_name",
+   "fieldtype": "Data",
+   "label": "Name"
+  },
+  {
+   "fieldname": "column_break_nmxz",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "customer_gstin",
+   "fieldtype": "Data",
+   "label": "GSTIN"
+  },
+  {
+   "fieldname": "customer_billing_name",
+   "fieldtype": "Data",
+   "label": "Billing Name"
+  },
+  {
+   "fieldname": "customer_category",
+   "fieldtype": "Data",
+   "label": "Category"
+  },
+  {
+   "fieldname": "delivery_location_section",
+   "fieldtype": "Section Break",
+   "label": "Delivery Location"
+  },
+  {
+   "fieldname": "delivery_latitude",
+   "fieldtype": "Data",
+   "label": "Latitude"
+  },
+  {
+   "fieldname": "delivery_longitude",
+   "fieldtype": "Data",
+   "label": "Longitude"
+  },
+  {
+   "fieldname": "delivery_address",
+   "fieldtype": "Small Text",
+   "label": "Address"
+  },
+  {
+   "fieldname": "facility_details_section",
+   "fieldtype": "Section Break",
+   "label": "Facility Details"
+  },
+  {
+   "fieldname": "plant",
+   "fieldtype": "Link",
+   "label": "Plant",
+   "options": "SF Facility Master"
+  },
+  {
+   "fieldname": "column_break_mjlk",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "darkstore",
+   "fieldtype": "Link",
+   "label": "Darkstore",
+   "options": "SF Facility Master"
+  },
+  {
+   "fieldname": "invoice_details_section",
+   "fieldtype": "Section Break",
+   "label": "Invoice Details"
+  },
+  {
+   "fieldname": "invoice_number",
+   "fieldtype": "Data",
+   "label": "Invoice Number"
+  },
+  {
+   "fieldname": "invoice_date",
+   "fieldtype": "Date",
+   "label": "Invoice Date"
+  },
+  {
+   "fieldname": "column_break_sjfk",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "cgst",
+   "fieldtype": "Float",
+   "label": "CGST"
+  },
+  {
+   "fieldname": "sgst",
+   "fieldtype": "Float",
+   "label": "SGST"
+  },
+  {
+   "fieldname": "igst",
+   "fieldtype": "Float",
+   "label": "IGST"
+  },
+  {
+   "fieldname": "total_tax",
+   "fieldtype": "Float",
+   "label": "Total Tax"
+  },
+  {
+   "fieldname": "column_break_aycs",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "subtotal",
+   "fieldtype": "Float",
+   "label": "Subtotal"
+  },
+  {
+   "fieldname": "total_amount",
+   "fieldtype": "Float",
+   "label": "Total Amount"
+  },
+  {
+   "fieldname": "currency",
+   "fieldtype": "Data",
+   "label": "Currency"
+  },
+  {
+   "fieldname": "order_item_list_section",
+   "fieldtype": "Section Break",
+   "label": "Order Item List"
+  },
+  {
+   "fieldname": "item_table",
+   "fieldtype": "Table",
+   "label": "Items",
+   "options": "SF Order Item"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2025-07-15 18:01:38.261076",
+ "modified_by": "Administrator",
+ "module": "custom_inventory_management",
+ "name": "SF Order Master",
+ "naming_rule": "Expression",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
