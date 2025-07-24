@@ -10,6 +10,7 @@
   "column_break_psts",
   "order_type",
   "order_date",
+  "is_order_processed",
   "customer_detail_section",
   "customer_id",
   "customer_name",
@@ -206,12 +207,18 @@
    "fieldtype": "Table",
    "label": "Items",
    "options": "SF Order Item"
+  },
+  {
+   "default": "0",
+   "fieldname": "is_order_processed",
+   "fieldtype": "Check",
+   "label": "Is Order Processed?"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-07-15 18:01:38.261076",
+ "modified": "2025-07-24 15:42:58.970473",
  "modified_by": "Administrator",
  "module": "custom_inventory_management",
  "name": "SF Order Master",

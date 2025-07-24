@@ -5,5 +5,5 @@
 from frappe.tests.utils import FrappeTestCase
 
 
-class TestCustomerCategory(FrappeTestCase):
+class TestSFExternalIDMapping(FrappeTestCase):
 	pass

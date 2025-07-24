@@ -406,5 +406,32 @@
      "state": null,
      "warehouse_name": "Stores",
      "warehouse_type": null
+    },
+    {
+        "account": null,
+        "address_line_1": null,
+        "address_line_2": null,
+        "city": null,
+        "company": "SIDS FARM PRIVATE LIMITED",
+        "custom_branch": null,
+        "custom_latitude": 0.0,
+        "custom_longitude": 0.0,
+        "default_in_transit_warehouse": null,
+        "disabled": 0,
+        "docstatus": 0,
+        "doctype": "Warehouse",
+        "email_id": null,
+        "is_group": 1,
+        "is_rejected_warehouse": 0,
+        "mobile_no": null,
+        "modified": "2024-11-30 19:17:37.578507",
+        "name": "Darkstore - SFPL",
+        "old_parent": "",
+        "parent_warehouse": "",
+        "phone_no": null,
+        "pin": null,
+        "state": null,
+        "warehouse_name": "Darkstore",
+        "warehouse_type": null
     }
    ]
