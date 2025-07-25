@@ -1,5 +1,6 @@
 {
  "actions": [],
+ "allow_import": 1,
  "allow_rename": 1,
  "autoname": "field:sf_product_id",
  "creation": "2025-06-11 17:27:00",
@@ -356,7 +357,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-07-15 22:49:52.447163",
+ "modified": "2025-07-25 07:57:34.299733",
  "modified_by": "Administrator",
  "module": "custom_inventory_management",
  "name": "SF Product Master",

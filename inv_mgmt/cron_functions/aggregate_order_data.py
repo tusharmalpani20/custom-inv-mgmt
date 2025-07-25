@@ -5,6 +5,22 @@ import json
 from typing import List, Dict, Any, Optional
 from collections import defaultdict
 
+# Debug flag - set to True to enable debug print statements
+DEBUG = True
+
+def debug_print(message: str):
+    """Print debug messages only when DEBUG flag is True"""
+    if DEBUG:
+        print(f"[DEBUG] {message}")
+
+def error_print(message: str):
+    """Print error messages - always visible"""
+    print(f"[ERROR] {message}")
+
+def info_print(message: str):
+    """Print info messages - always visible"""
+    print(f"[INFO] {message}")
+
 
 def aggregate_orders_and_create_sales_orders(branches: List[str], order_date: str) -> Dict[str, Any]:
     """
@@ -19,23 +35,31 @@ def aggregate_orders_and_create_sales_orders(branches: List[str], order_date: st
         Dict with aggregation results and created sales orders
     """
     try:
+        info_print(f"Starting order aggregation for branches: {branches}, date: {order_date}")
+        
         # Step 1: Build warehouse hierarchy
         hierarchy = build_warehouse_hierarchy(branches)
+        debug_print(f"Built warehouse hierarchy with {len(hierarchy)} plants")
         
         # Step 2: Get D2C orders for the specified date and plants
         orders = get_d2c_orders_for_date_and_plants(order_date, list(hierarchy.keys()))
+        info_print(f"Fetched {len(orders)} D2C orders")
         
         # Step 3: Group orders by hierarchy (darkstore -> distribution center -> plant)
         grouped_orders = group_orders_by_hierarchy(orders, hierarchy)
+        debug_print(f"Grouped orders by hierarchy")
         
         # Step 4: Process items and expand combos (validate items and discard invalid orders)
         processed_orders, discarded_orders = process_order_items(grouped_orders)
+        info_print(f"Processed orders - Valid: {len([o for plant in processed_orders.values() for dc in plant.values() for ds in dc.values() for o in ds.get('orders', [])])}, Discarded: {len(discarded_orders)}")
         
         # Step 5: Create cyclic sales orders
         created_sales_orders = create_cyclic_sales_orders(processed_orders, order_date)
+        info_print(f"Created {len(created_sales_orders)} sales orders")
         
         # Step 6: Mark successfully processed orders as processed
         processed_order_names = mark_orders_as_processed(processed_orders)
+        info_print(f"Marked {len(processed_order_names)} orders as processed")
         
         return {
             "status": "success",
@@ -51,7 +75,7 @@ def aggregate_orders_and_create_sales_orders(branches: List[str], order_date: st
         }
         
     except Exception as e:
-        frappe.log_error(f"Error in aggregate_orders_and_create_sales_orders: {str(e)}")
+        error_print(f"Error in aggregate_orders_and_create_sales_orders: {str(e)}")
         return {
             "status": "error",
             "message": str(e)
@@ -68,6 +92,7 @@ def build_warehouse_hierarchy(branches: List[str]) -> Dict[str, Dict]:
     Returns:
         Dict with plant as key and nested dict of distribution centers and darkstores
     """
+    debug_print(f"Building warehouse hierarchy for branches: {branches}")
     hierarchy = {}
     
     # Get all plants for the specified branches
@@ -79,6 +104,8 @@ def build_warehouse_hierarchy(branches: List[str]) -> Dict[str, Dict]:
         AND disabled = 0
     """, {"branches": branches}, as_dict=True)
     
+    debug_print(f"Found {len(plants)} plants")
+    
     for plant in plants:
         plant_facility = frappe.db.get_value(
             "SF Facility Master",
@@ -88,6 +115,7 @@ def build_warehouse_hierarchy(branches: List[str]) -> Dict[str, Dict]:
         )
         
         if not plant_facility:
+            debug_print(f"No facility found for plant {plant.name}")
             continue
             
         hierarchy[plant.name] = {
@@ -109,6 +137,8 @@ def build_warehouse_hierarchy(branches: List[str]) -> Dict[str, Dict]:
             AND disabled = 0
         """, {"plant": plant.name}, as_dict=True)
         
+        debug_print(f"Found {len(distribution_centers)} distribution centers for plant {plant.name}")
+        
         for dc in distribution_centers:
             hierarchy[plant.name]["distribution_centers"][dc.name] = {
                 "dc_info": {
@@ -127,6 +157,8 @@ def build_warehouse_hierarchy(branches: List[str]) -> Dict[str, Dict]:
                 AND custom_distribution_center_link = %(dc)s
                 AND disabled = 0
             """, {"dc": dc.name}, as_dict=True)
+            
+            debug_print(f"Found {len(darkstores)} darkstores for DC {dc.name}")
             
             for darkstore in darkstores:
                 darkstore_facility = frappe.db.get_value(
@@ -160,6 +192,8 @@ def get_d2c_orders_for_date_and_plants(order_date: str, plant_names: List[str]) 
     Returns:
         List of order dictionaries
     """
+    debug_print(f"Getting D2C orders for date {order_date} and {len(plant_names)} plants")
+    
     # Get SF Facility Master names for the plants
     plant_facilities = frappe.db.sql("""
         SELECT name
@@ -169,9 +203,11 @@ def get_d2c_orders_for_date_and_plants(order_date: str, plant_names: List[str]) 
     """, {"plants": plant_names}, as_dict=True)
     
     if not plant_facilities:
+        debug_print("No plant facilities found")
         return []
     
     plant_facility_names = [pf.name for pf in plant_facilities]
+    debug_print(f"Found {len(plant_facility_names)} plant facilities")
     
     # Get D2C orders for the date and plants that haven't been processed
     orders = frappe.db.sql("""
@@ -187,6 +223,7 @@ def get_d2c_orders_for_date_and_plants(order_date: str, plant_names: List[str]) 
         "plant_facilities": plant_facility_names
     }, as_dict=True)
     
+    debug_print(f"Found {len(orders)} unprocessed D2C orders")
     return orders
 
 
@@ -201,6 +238,7 @@ def group_orders_by_hierarchy(orders: List[Dict], hierarchy: Dict) -> Dict:
     Returns:
         Grouped orders by hierarchy
     """
+    debug_print(f"Grouping {len(orders)} orders by hierarchy")
     grouped = defaultdict(lambda: defaultdict(lambda: defaultdict(list)))
     
     # Create reverse mapping from facility to warehouse
@@ -222,11 +260,15 @@ def group_orders_by_hierarchy(orders: List[Dict], hierarchy: Dict) -> Dict:
                         "dc": dc_warehouse
                     }
     
+    debug_print(f"Created facility to warehouse mapping with {len(facility_to_warehouse)} entries")
+    
+    grouped_count = 0
     for order in orders:
         plant_facility = order.get("plant")
         darkstore_facility = order.get("darkstore")
         
         if not plant_facility or not darkstore_facility:
+            debug_print(f"Skipping order {order.get('name')} - missing plant or darkstore facility")
             continue
             
         # Find the corresponding warehouses
@@ -234,6 +276,7 @@ def group_orders_by_hierarchy(orders: List[Dict], hierarchy: Dict) -> Dict:
         darkstore_info = facility_to_warehouse.get(darkstore_facility)
         
         if not plant_info or not darkstore_info:
+            debug_print(f"Skipping order {order.get('name')} - facility mapping not found")
             continue
             
         plant_warehouse = plant_info["warehouse"]
@@ -241,7 +284,9 @@ def group_orders_by_hierarchy(orders: List[Dict], hierarchy: Dict) -> Dict:
         dc_warehouse = darkstore_info["dc"]
         
         grouped[plant_warehouse][dc_warehouse][darkstore_warehouse].append(order)
+        grouped_count += 1
     
+    debug_print(f"Successfully grouped {grouped_count} orders")
     return dict(grouped)
 
 
@@ -256,6 +301,7 @@ def process_order_items(grouped_orders: Dict) -> tuple[Dict, List[Dict]]:
     Returns:
         Tuple of (processed_orders, discarded_orders)
     """
+    debug_print("Processing order items and validating product links")
     processed = {}
     discarded_orders = []
     
@@ -268,6 +314,8 @@ def process_order_items(grouped_orders: Dict) -> tuple[Dict, List[Dict]]:
                     "orders": [],
                     "items": defaultdict(float)  # item_code -> total_quantity
                 }
+                
+                debug_print(f"Processing {len(orders)} orders for darkstore {darkstore}")
                 
                 # Process each order's items
                 for order in orders:
@@ -283,14 +331,14 @@ def process_order_items(grouped_orders: Dict) -> tuple[Dict, List[Dict]]:
                     # First pass: validate all items in the order
                     for order_item in order_items:
                         if not order_item.sf_product_master:
-                            frappe.log_error(f"Order {order.name}: SF Product Master not found for item {order_item.item_id}")
+                            error_print(f"Order {order.name}: SF Product Master not found for item {order_item.item_id}")
                             order_valid = False
                             break
                             
                         try:
                             sf_product = frappe.get_doc("SF Product Master", order_item.sf_product_master)
                         except frappe.DoesNotExistError:
-                            frappe.log_error(f"Order {order.name}: SF Product Master {order_item.sf_product_master} does not exist")
+                            error_print(f"Order {order.name}: SF Product Master {order_item.sf_product_master} does not exist")
                             order_valid = False
                             break
                         
@@ -304,12 +352,12 @@ def process_order_items(grouped_orders: Dict) -> tuple[Dict, List[Dict]]:
                         else:
                             # Validate single item has valid item link
                             if not sf_product.item_link:
-                                frappe.log_error(f"Order {order.name}: SF Product {sf_product.name} has no item_link to ERPNext Item")
+                                error_print(f"Order {order.name}: SF Product {sf_product.name} has no item_link to ERPNext Item")
                                 order_valid = False
                                 break
                             # Check if the linked item exists in ERPNext
                             if not frappe.db.exists("Item", sf_product.item_link):
-                                frappe.log_error(f"Order {order.name}: ERPNext Item {sf_product.item_link} does not exist")
+                                error_print(f"Order {order.name}: ERPNext Item {sf_product.item_link} does not exist")
                                 order_valid = False
                                 break
                             order_items_processed[order_item.item_id] = {sf_product.item_link: order_item.quantity}
@@ -322,6 +370,7 @@ def process_order_items(grouped_orders: Dict) -> tuple[Dict, List[Dict]]:
                         for item_dict in order_items_processed.values():
                             for item_code, qty in item_dict.items():
                                 processed[plant][dc][darkstore]["items"][item_code] += qty
+                        debug_print(f"Order {order.name} processed successfully")
                     else:
                         # Add to discarded orders with reason
                         discarded_orders.append({
@@ -331,6 +380,7 @@ def process_order_items(grouped_orders: Dict) -> tuple[Dict, List[Dict]]:
                             "darkstore": order.darkstore,
                             "reason": "One or more items have invalid or missing ERPNext item links"
                         })
+                        error_print(f"Order {order.name} discarded due to invalid items")
                 
                 # Remove empty darkstore entries
                 if not processed[plant][dc][darkstore]["orders"]:
@@ -344,6 +394,7 @@ def process_order_items(grouped_orders: Dict) -> tuple[Dict, List[Dict]]:
         if not processed[plant]:
             del processed[plant]
     
+    info_print(f"Order processing complete - {len(discarded_orders)} orders discarded")
     return processed, discarded_orders
 
 
@@ -359,31 +410,33 @@ def validate_and_expand_combo_items(sf_product: object, order_quantity: float, o
     Returns:
         Dict of item_code -> total_quantity, or None if validation fails
     """
+    debug_print(f"Validating combo product {sf_product.name} for order {order_name}")
     expanded_items = {}
     
     if not sf_product.combo_items:
-        frappe.log_error(f"Order {order_name}: Combo product {sf_product.name} has no combo items defined")
+        error_print(f"Order {order_name}: Combo product {sf_product.name} has no combo items defined")
         return None
     
     for combo_item in sf_product.combo_items:
         try:
             combo_sf_product = frappe.get_doc("SF Product Master", combo_item.sf_product_id)
         except frappe.DoesNotExistError:
-            frappe.log_error(f"Order {order_name}: Combo item SF Product {combo_item.sf_product_id} does not exist")
+            error_print(f"Order {order_name}: Combo item SF Product {combo_item.sf_product_id} does not exist")
             return None
             
         if not combo_sf_product.item_link:
-            frappe.log_error(f"Order {order_name}: Combo item SF Product {combo_sf_product.name} has no item_link to ERPNext Item")
+            error_print(f"Order {order_name}: Combo item SF Product {combo_sf_product.name} has no item_link to ERPNext Item")
             return None
             
         # Check if the linked item exists in ERPNext
         if not frappe.db.exists("Item", combo_sf_product.item_link):
-            frappe.log_error(f"Order {order_name}: ERPNext Item {combo_sf_product.item_link} does not exist")
+            error_print(f"Order {order_name}: ERPNext Item {combo_sf_product.item_link} does not exist")
             return None
             
         item_quantity = combo_item.quantity * order_quantity
         expanded_items[combo_sf_product.item_link] = expanded_items.get(combo_sf_product.item_link, 0) + item_quantity
     
+    debug_print(f"Combo product {sf_product.name} expanded to {len(expanded_items)} items")
     return expanded_items
 
 
@@ -398,11 +451,14 @@ def create_cyclic_sales_orders(processed_orders: Dict, order_date: str) -> List[
     Returns:
         List of created sales order details
     """
+    info_print("Creating cyclic sales orders")
     created_orders = []
     
     # Get default company and internal customer
     default_company = frappe.defaults.get_defaults().get("company")
-    internal_customer = get_or_create_internal_customer(default_company)
+    internal_customer = get_internal_customer()
+    
+    debug_print(f"Using company: {default_company}, customer: {internal_customer}")
     
     for plant, plant_data in processed_orders.items():
         for dc, dc_data in plant_data.items():
@@ -413,6 +469,7 @@ def create_cyclic_sales_orders(processed_orders: Dict, order_date: str) -> List[
             )
             if dc_order:
                 created_orders.append(dc_order)
+                info_print(f"Created DC order: {dc_order['sales_order']}")
             
             for darkstore, darkstore_data in dc_data.items():
                 # Create darkstore order (from DC to darkstore)
@@ -421,6 +478,7 @@ def create_cyclic_sales_orders(processed_orders: Dict, order_date: str) -> List[
                 )
                 if darkstore_order:
                     created_orders.append(darkstore_order)
+                    info_print(f"Created darkstore order: {darkstore_order['sales_order']}")
     
     return created_orders
 
@@ -435,6 +493,7 @@ def mark_orders_as_processed(processed_orders: Dict) -> List[str]:
     Returns:
         List of order names that were marked as processed
     """
+    debug_print("Marking orders as processed")
     processed_order_names = []
     
     try:
@@ -446,14 +505,16 @@ def mark_orders_as_processed(processed_orders: Dict) -> List[str]:
                             # Mark order as processed
                             frappe.db.set_value("SF Order Master", order.name, "is_order_processed", 1)
                             processed_order_names.append(order.name)
+                            debug_print(f"Marked order {order.name} as processed")
                         except Exception as e:
-                            frappe.log_error(f"Error marking order {order.name} as processed: {str(e)}")
+                            error_print(f"Error marking order {order.name} as processed: {str(e)}")
         
         # Commit the changes
         frappe.db.commit()
+        info_print(f"Successfully marked {len(processed_order_names)} orders as processed")
         
     except Exception as e:
-        frappe.log_error(f"Error in mark_orders_as_processed: {str(e)}")
+        error_print(f"Error in mark_orders_as_processed: {str(e)}")
     
     return processed_order_names
 
@@ -465,6 +526,8 @@ def create_sales_order_for_darkstore(dc_warehouse: str, darkstore_warehouse: str
     Create sales order for darkstore (from distribution center to darkstore)
     """
     try:
+        debug_print(f"Creating sales order for darkstore {darkstore_warehouse}")
+        
         # Get darkstore facility for shipping address
         darkstore_facility = frappe.db.get_value(
             "SF Facility Master",
@@ -474,7 +537,7 @@ def create_sales_order_for_darkstore(dc_warehouse: str, darkstore_warehouse: str
         )
         
         if not darkstore_facility or not darkstore_facility.shipping_address:
-            frappe.log_error(f"No shipping address found for darkstore {darkstore_warehouse}")
+            error_print(f"No shipping address found for darkstore {darkstore_warehouse}")
             return None
         
         # Create sales order
@@ -501,10 +564,13 @@ def create_sales_order_for_darkstore(dc_warehouse: str, darkstore_warehouse: str
                 })
         
         if not sales_order.items:
+            debug_print(f"No items to add to darkstore sales order for {darkstore_warehouse}")
             return None
             
         sales_order.insert()
         sales_order.submit()
+        
+        debug_print(f"Successfully created darkstore sales order {sales_order.name}")
         
         return {
             "type": "darkstore_order",
@@ -516,7 +582,7 @@ def create_sales_order_for_darkstore(dc_warehouse: str, darkstore_warehouse: str
         }
         
     except Exception as e:
-        frappe.log_error(f"Error creating darkstore sales order: {str(e)}")
+        error_print(f"Error creating darkstore sales order: {str(e)}")
         return None
 
 
@@ -527,6 +593,8 @@ def create_sales_order_for_distribution_center(plant_warehouse: str, dc_warehous
     Create sales order for distribution center (from plant to distribution center)
     """
     try:
+        debug_print(f"Creating sales order for distribution center {dc_warehouse}")
+        
         # Aggregate all items from all darkstores under this DC
         aggregated_items = defaultdict(float)
         for darkstore_data in dc_data.values():
@@ -535,6 +603,7 @@ def create_sales_order_for_distribution_center(plant_warehouse: str, dc_warehous
                     aggregated_items[item_code] += quantity
         
         if not aggregated_items:
+            debug_print(f"No items to aggregate for DC {dc_warehouse}")
             return None
         
         # Get DC warehouse address for shipping
@@ -568,10 +637,13 @@ def create_sales_order_for_distribution_center(plant_warehouse: str, dc_warehous
                 })
         
         if not sales_order.items:
+            debug_print(f"No items to add to DC sales order for {dc_warehouse}")
             return None
             
         sales_order.insert()
         sales_order.submit()
+        
+        debug_print(f"Successfully created DC sales order {sales_order.name}")
         
         return {
             "type": "distribution_center_order",
@@ -583,38 +655,21 @@ def create_sales_order_for_distribution_center(plant_warehouse: str, dc_warehous
         }
         
     except Exception as e:
-        frappe.log_error(f"Error creating distribution center sales order: {str(e)}")
+        error_print(f"Error creating distribution center sales order: {str(e)}")
         return None
 
 
-def get_or_create_internal_customer(company: str) -> str:
+def get_internal_customer():
     """
-    Get or create internal customer for the company
-    
-    Args:
-        company: Company name
-    
-    Returns:
-        Customer name
+    Get internal customer for default company
     """
-    # Check if internal customer exists
-    customer_name = f"{company} - Internal"
+    default_company = frappe.defaults.get_defaults().get("company")
+    internal_customer = frappe.get_value("Customer", {"is_internal_customer": 1, "represents_company": default_company}, "name")
     
-    if not frappe.db.exists("Customer", customer_name):
-        # Create internal customer
-        customer = frappe.get_doc({
-            "doctype": "Customer",
-            "customer_name": customer_name,
-            "customer_type": "Company",
-            "is_internal_customer": 1,
-            "represents_company": company,
-            "customer_group": frappe.db.get_single_value("Selling Settings", "customer_group") or "All Customer Groups",
-            "territory": frappe.db.get_single_value("Selling Settings", "territory") or "All Territories"
-        })
-        customer.insert(ignore_permissions=True)
-        return customer.name
+    if not internal_customer:
+        frappe.throw(_("No internal customer found for company {0}").format(default_company))
     
-    return customer_name
+    return internal_customer
 
 
 # Utility function for testing
@@ -632,8 +687,12 @@ def test_aggregate_orders(branches_json: str, order_date: str) -> Dict[str, Any]
     """
     try:
         branches = json.loads(branches_json) if isinstance(branches_json, str) else branches_json
-        return aggregate_orders_and_create_sales_orders(branches, order_date)
+        info_print(f"Test run started - branches: {branches}, date: {order_date}")
+        result = aggregate_orders_and_create_sales_orders(branches, order_date)
+        info_print(f"Test run completed - status: {result['status']}")
+        return result
     except Exception as e:
+        error_print(f"Test run failed: {str(e)}")
         return {
             "status": "error",
             "message": str(e)
@@ -647,6 +706,8 @@ def daily_order_aggregation():
     This can be configured in hooks.py for automatic execution
     """
     try:
+        info_print("Starting daily order aggregation job")
+        
         # # Get all active branches
         # branches = frappe.db.sql("""
         #     SELECT name
@@ -660,12 +721,14 @@ def daily_order_aggregation():
         branch_names = ["Hyderabad"]
         yesterday = "2025-07-15"
         
+        info_print(f"Processing branches: {branch_names}, date: {yesterday}")
+        
         result = aggregate_orders_and_create_sales_orders(branch_names, yesterday)
         
         if result["status"] == "success":
-            frappe.logger().info(f"Daily order aggregation completed: {result['message']}")
+            info_print(f"Daily order aggregation completed: {result['message']}")
         else:
-            frappe.log_error(f"Daily order aggregation failed: {result['message']}")
+            error_print(f"Daily order aggregation failed: {result['message']}")
             
     except Exception as e:
-        frappe.log_error(f"Error in daily_order_aggregation: {str(e)}")
+        error_print(f"Error in daily_order_aggregation: {str(e)}")

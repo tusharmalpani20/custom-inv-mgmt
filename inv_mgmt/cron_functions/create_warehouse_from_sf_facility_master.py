@@ -147,4 +147,7 @@ def create_missing_darkstore_warehouses():
     return {
         "message": f"Created {len(created)} warehouses",
         "warehouses": created
-    } 
+    }
+
+# this function is used to create warehouses for darkstore facilities that don't have warehouses
+# bench execute "inv_mgmt.cron_functions.create_warehouse_from_sf_facility_master.create_missing_darkstore_warehouses"

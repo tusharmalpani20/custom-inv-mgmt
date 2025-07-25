@@ -10,7 +10,8 @@
   "column_break_psts",
   "order_type",
   "order_date",
-  "is_order_processed",
+  "processing_status",
+  "is_invalid_item_present",
   "customer_detail_section",
   "customer_id",
   "customer_name",
@@ -210,15 +211,23 @@
   },
   {
    "default": "0",
-   "fieldname": "is_order_processed",
+   "fieldname": "is_invalid_item_present",
    "fieldtype": "Check",
-   "label": "Is Order Processed?"
+   "label": "Invalid Item in Order?",
+   "read_only": 1
+  },
+  {
+   "default": "Unprocessed",
+   "fieldname": "processing_status",
+   "fieldtype": "Select",
+   "label": "Processing Status",
+   "options": "Unprocessed\nPartially Processed\nProcessed"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-07-24 15:42:58.970473",
+ "modified": "2025-07-25 16:38:44.226882",
  "modified_by": "Administrator",
  "module": "custom_inventory_management",
  "name": "SF Order Master",

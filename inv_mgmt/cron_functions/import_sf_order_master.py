@@ -11,6 +11,35 @@ D2C_ORDER_API_DELAY_SECONDS = 5
 # Time delay for B2B order API calls (5 seconds)
 B2B_ORDER_API_DELAY_SECONDS = 5
 
+def create_error_log(reference_doctype=None, internal_reference=None, source_system=None, 
+                     external_id=None, entity_type=None, error_category=None, 
+                     error_severity="Medium", processing_stage=None, error_description=None, 
+                     additional_detail=None):
+    """
+    Create an error log entry in SF Inventory Data Import Error Logs
+    """
+    try:
+        error_log = frappe.new_doc("SF Inventory Data Import Error Logs")
+        error_log.error_date = today()
+        error_log.reference_doctype = reference_doctype
+        error_log.internal_reference = internal_reference
+        error_log.source_system = source_system
+        error_log.external_id = external_id
+        error_log.entity_type = entity_type
+        error_log.error_category = error_category
+        error_log.error_severity = error_severity
+        error_log.processing_stage = processing_stage
+        error_log.error_description = error_description
+        if additional_detail:
+            error_log.additional_detail = json.dumps(additional_detail)
+        
+        error_log.insert()
+        print(f"Created error log: {error_log.name}")
+        
+    except Exception as e:
+        print(f"Failed to create error log: {str(e)}")
+
+
 def import_d2c_orders():
     """
     Import D2C orders from SF API and create SF Order Master records.
@@ -33,7 +62,7 @@ def import_d2c_orders():
         }
         
         request_data = {
-            "delivery_date": today(),
+            "delivery_date": "2025-07-15",
             "regenerate": False
         }
         
@@ -93,15 +122,34 @@ def import_d2c_orders():
                 
             except Exception as e:
                 error_count += 1
+                order_id = order_data.get("order_id")
                 error_detail = {
-                    "order_id": order_data.get("order_id"),
+                    "order_id": order_id,
                     "error": str(e)
                 }
                 errors.append(error_detail)
                 
-                print(f"Error processing order {order_data.get('order_id')}: {str(e)}")
+                print(f"Error processing order {order_id}: {str(e)}")
+                
+                # Create comprehensive error log
+                error_description = f"Failed to process D2C Order {order_id} during import: {str(e)}"
+                create_error_log(
+                    source_system="SF Order API",
+                    external_id=order_id,
+                    entity_type="Order D2C",
+                    error_category="Order Processing",
+                    error_severity="High",
+                    processing_stage="Record Creation",
+                    error_description=error_description,
+                    additional_detail={
+                        "error": str(e),
+                        "order_data": order_data,
+                        "import_process": "D2C Order Import"
+                    }
+                )
+                
                 frappe.log_error(
-                    title=f"D2C Order Import Error - {order_data.get('order_id')}",
+                    title=f"D2C Order Import Error - {order_id}",
                     message=f"Error: {str(e)}\nOrder Data: {json.dumps(order_data, indent=2)}"
                 )
         
@@ -151,7 +199,7 @@ def import_b2b_orders():
         }
         
         request_data = {
-            "delivery_date": today(),
+            "delivery_date": "2025-07-15",
             "regenerate": False
         }
         
@@ -211,15 +259,34 @@ def import_b2b_orders():
                 
             except Exception as e:
                 error_count += 1
+                order_id = order_data.get("order_id")
                 error_detail = {
-                    "order_id": order_data.get("order_id"),
+                    "order_id": order_id,
                     "error": str(e)
                 }
                 errors.append(error_detail)
                 
-                print(f"Error processing B2B order {order_data.get('order_id')}: {str(e)}")
+                print(f"Error processing B2B order {order_id}: {str(e)}")
+                
+                # Create comprehensive error log
+                error_description = f"Failed to process B2B Order {order_id} during import: {str(e)}"
+                create_error_log(
+                    source_system="SF Order API",
+                    external_id=order_id,
+                    entity_type="Order B2B",
+                    error_category="Order Processing",
+                    error_severity="High",
+                    processing_stage="Record Creation",
+                    error_description=error_description,
+                    additional_detail={
+                        "error": str(e),
+                        "order_data": order_data,
+                        "import_process": "B2B Order Import"
+                    }
+                )
+                
                 frappe.log_error(
-                    title=f"B2B Order Import Error - {order_data.get('order_id')}",
+                    title=f"B2B Order Import Error - {order_id}",
                     message=f"Error: {str(e)}\nOrder Data: {json.dumps(order_data, indent=2)}"
                 )
         
@@ -252,16 +319,39 @@ def create_order_master_record(order_data):
     Create SF Order Master record from D2C order data
     """
     try:
+        order_id = order_data.get("order_id")
+        
         # Check if order already exists
         existing_order = frappe.get_all(
             "SF Order Master",
-            filters={"order_id": order_data.get("order_id")},
+            filters={"order_id": order_id},
             fields=["name"]
         )
         
         if existing_order:
-            print(f"Order {order_data.get('order_id')} already exists, skipping...")
+            print(f"Order {order_id} already exists, skipping...")
             return
+
+        # Validate darkstore presence for D2C orders (mandatory for D2C)
+        darkstore_data = order_data.get("darkstore", {})
+        if not darkstore_data or not darkstore_data.get("darkstore_id") or not darkstore_data.get("darkstore_name"):
+            error_description = f"D2C Order {order_id} is missing required darkstore information. D2C orders must have valid darkstore details."
+            create_error_log(
+                source_system="SF Order API",
+                external_id=order_id,
+                entity_type="Order D2C",
+                error_category="Data Validation",
+                error_severity="High",
+                processing_stage="Data Validation",
+                error_description=error_description,
+                additional_detail={
+                    "order_data": order_data,
+                    "missing_field": "darkstore",
+                    "validation_rule": "D2C orders require valid darkstore information"
+                }
+            )
+            print(f"Error: {error_description}")
+            raise Exception(error_description)
         
         # Get or create plant facility
         plant_data = order_data.get("plant", {})
@@ -272,7 +362,6 @@ def create_order_master_record(order_data):
         )
         
         # Get or create darkstore facility
-        darkstore_data = order_data.get("darkstore", {})
         darkstore_facility = get_or_create_facility(
             facility_id=darkstore_data.get("darkstore_id"),
             facility_name=darkstore_data.get("darkstore_name"),
@@ -286,7 +375,7 @@ def create_order_master_record(order_data):
         order_master = frappe.new_doc("SF Order Master")
         
         # Basic order information
-        order_master.order_id = order_data.get("order_id")
+        order_master.order_id = order_id
         order_master.order_type = order_data.get("order_type", "D2C")
         order_master.order_date = order_data.get("order_date")
         
@@ -294,36 +383,62 @@ def create_order_master_record(order_data):
         order_master.plant = plant_facility
         order_master.darkstore = darkstore_facility
         
-        # Delivery location (from darkstore data)
-        # if darkstore_data:
-        #     order_master.delivery_latitude = darkstore_data.get("latitude")
-        #     order_master.delivery_longitude = darkstore_data.get("longitude")
-        #     order_master.delivery_address = darkstore_data.get("address")
-        
         # Currency default
         order_master.currency = "INR"
         
         # Process SKU summary to create order items
         sku_summary = order_data.get("sku_summary", [])
         total_amount = 0
+        has_invalid_items = False
         
         for sku in sku_summary:
+            sku_id = sku.get("sku_id")
+            sku_name = sku.get("sku_name")
+            
             # Find corresponding SF Product Master
-            sf_product = get_sf_product_by_sku(sku.get("sku_id"), sku.get("sku_name"))
+            sf_product = get_sf_product_by_sku(sku_id, sku_name)
+            
+            # Create order item
+            order_item = order_master.append("item_table", {})
+            order_item.item_id = sku_id
+            order_item.item_name = sku_name
+            order_item.quantity = sku.get("quantity", 0)
             
             if sf_product:
-                # Create order item
-                order_item = order_master.append("item_table", {})
-                order_item.item_id = sku.get("sku_id")
-                order_item.item_name = sku.get("sku_name")
-                order_item.quantity = sku.get("quantity", 0)
                 order_item.unit_price = sf_product.get("offer_price", 0)
                 order_item.total_price = order_item.quantity * order_item.unit_price
                 order_item.sf_product_master = sf_product.get("name")
-                
+                order_item.is_invalid_item = 0
                 total_amount += order_item.total_price
             else:
-                print(f"Warning: SF Product Master not found for SKU {sku.get('sku_id')} - {sku.get('sku_name')}")
+                # Mark as invalid item
+                order_item.unit_price = 0
+                order_item.total_price = 0
+                order_item.is_invalid_item = 1
+                has_invalid_items = True
+                
+                # Create error log for missing product
+                error_description = f"Product not found in SF Product Master for SKU ID: {sku_id}, SKU Name: {sku_name} in D2C Order {order_id}"
+                create_error_log(
+                    source_system="SF Order API",
+                    external_id=order_id,
+                    entity_type="Order D2C",
+                    error_category="Missing Reference",
+                    error_severity="Medium",
+                    processing_stage="Item Validation",
+                    error_description=error_description,
+                    additional_detail={
+                        "sku_id": sku_id,
+                        "sku_name": sku_name,
+                        "order_id": order_id,
+                        "order_type": "D2C"
+                    }
+                )
+                
+                print(f"Warning: SF Product Master not found for SKU {sku_id} - {sku_name}")
+        
+        # Set invalid item flag at order level
+        order_master.is_invalid_item_present = 1 if has_invalid_items else 0
         
         # Set total amounts
         order_master.subtotal = total_amount
@@ -332,9 +447,45 @@ def create_order_master_record(order_data):
         # Save the document
         order_master.insert()
         
+        # If order has invalid items, create an order-level error log
+        if has_invalid_items:
+            error_description = f"D2C Order {order_id} contains one or more items that are not found in SF Product Master"
+            create_error_log(
+                reference_doctype="SF Order Master",
+                internal_reference=order_master.name,
+                source_system="SF Order API",
+                external_id=order_id,
+                entity_type="Order D2C",
+                error_category="Product Linking",
+                error_severity="Medium",
+                processing_stage="Record Creation",
+                error_description=error_description,
+                additional_detail={
+                    "order_id": order_id,
+                    "order_type": "D2C",
+                    "total_items": len(sku_summary),
+                    "invalid_items_present": True
+                }
+            )
+        
         print(f"Created SF Order Master: {order_master.name}")
         
     except Exception as e:
+        # Create error log for order creation failure
+        error_description = f"Failed to create D2C Order {order_data.get('order_id', 'Unknown')}: {str(e)}"
+        create_error_log(
+            source_system="SF Order API",
+            external_id=order_data.get('order_id'),
+            entity_type="Order D2C",
+            error_category="Order Processing",
+            error_severity="High",
+            processing_stage="Record Creation",
+            error_description=error_description,
+            additional_detail={
+                "error": str(e),
+                "order_data": order_data
+            }
+        )
         print(f"Error creating order master record: {str(e)}")
         raise
 
@@ -344,15 +495,17 @@ def create_b2b_order_master_record(order_data):
     Create SF Order Master record from B2B order data
     """
     try:
+        order_id = order_data.get("order_id")
+        
         # Check if order already exists
         existing_order = frappe.get_all(
             "SF Order Master",
-            filters={"order_id": order_data.get("order_id")},
+            filters={"order_id": order_id},
             fields=["name"]
         )
         
         if existing_order:
-            print(f"B2B Order {order_data.get('order_id')} already exists, skipping...")
+            print(f"B2B Order {order_id} already exists, skipping...")
             return
         
         # Get or create plant facility
@@ -380,7 +533,7 @@ def create_b2b_order_master_record(order_data):
         order_master = frappe.new_doc("SF Order Master")
         
         # Basic order information
-        order_master.order_id = order_data.get("order_id")
+        order_master.order_id = order_id
         order_master.order_type = order_data.get("order_type", "B2B")
         order_master.order_date = order_data.get("order_date")
         
@@ -428,25 +581,55 @@ def create_b2b_order_master_record(order_data):
         # Process items to create order items
         items = order_data.get("items", [])
         calculated_total = 0
+        has_invalid_items = False
         
         for item in items:
+            sku_id = item.get("sku_id")
+            sku_name = item.get("sku_name")
+            
             # Find corresponding SF Product Master
-            sf_product = get_sf_product_by_sku(item.get("sku_id"), item.get("sku_name"))
+            sf_product = get_sf_product_by_sku(sku_id, sku_name)
             
             # Create order item (even if product not found, we'll use the provided data)
             order_item = order_master.append("item_table", {})
-            order_item.item_id = item.get("sku_id")
-            order_item.item_name = item.get("sku_name")
+            order_item.item_id = sku_id
+            order_item.item_name = sku_name
             order_item.quantity = item.get("quantity", 0)
             order_item.unit_price = item.get("unit_price", 0)
             order_item.total_price = item.get("total_price", 0)
             
             if sf_product:
                 order_item.sf_product_master = sf_product.get("name")
+                order_item.is_invalid_item = 0
             else:
-                print(f"Warning: SF Product Master not found for SKU {item.get('sku_id')} - {item.get('sku_name')}")
+                # Mark as invalid item
+                order_item.is_invalid_item = 1
+                has_invalid_items = True
+                
+                # Create error log for missing product
+                error_description = f"Product not found in SF Product Master for SKU ID: {sku_id}, SKU Name: {sku_name} in B2B Order {order_id}"
+                create_error_log(
+                    source_system="SF Order API",
+                    external_id=order_id,
+                    entity_type="Order B2B",
+                    error_category="Missing Reference",
+                    error_severity="Medium",
+                    processing_stage="Item Validation",
+                    error_description=error_description,
+                    additional_detail={
+                        "sku_id": sku_id,
+                        "sku_name": sku_name,
+                        "order_id": order_id,
+                        "order_type": "B2B"
+                    }
+                )
+                
+                print(f"Warning: SF Product Master not found for SKU {sku_id} - {sku_name}")
             
             calculated_total += order_item.total_price
+        
+        # Set invalid item flag at order level
+        order_master.is_invalid_item_present = 1 if has_invalid_items else 0
         
         # If no invoice total was provided, use calculated total
         if not order_master.total_amount:
@@ -456,9 +639,45 @@ def create_b2b_order_master_record(order_data):
         # Save the document
         order_master.insert()
         
+        # If order has invalid items, create an order-level error log
+        if has_invalid_items:
+            error_description = f"B2B Order {order_id} contains one or more items that are not found in SF Product Master"
+            create_error_log(
+                reference_doctype="SF Order Master",
+                internal_reference=order_master.name,
+                source_system="SF Order API",
+                external_id=order_id,
+                entity_type="Order B2B",
+                error_category="Product Linking",
+                error_severity="Medium",
+                processing_stage="Record Creation",
+                error_description=error_description,
+                additional_detail={
+                    "order_id": order_id,
+                    "order_type": "B2B",
+                    "total_items": len(items),
+                    "invalid_items_present": True
+                }
+            )
+        
         print(f"Created B2B SF Order Master: {order_master.name}")
         
     except Exception as e:
+        # Create error log for order creation failure
+        error_description = f"Failed to create B2B Order {order_data.get('order_id', 'Unknown')}: {str(e)}"
+        create_error_log(
+            source_system="SF Order API",
+            external_id=order_data.get('order_id'),
+            entity_type="Order B2B",
+            error_category="Order Processing",
+            error_severity="High",
+            processing_stage="Record Creation",
+            error_description=error_description,
+            additional_detail={
+                "error": str(e),
+                "order_data": order_data
+            }
+        )
         print(f"Error creating B2B order master record: {str(e)}")
         raise
 
@@ -599,3 +818,8 @@ def import_all_orders():
         "d2c_result": d2c_result,
         "b2b_result": b2b_result
     }
+
+# this function is used to import SF Order Master records from SF API
+# we run this function after we have imported SF Product Master records
+
+# bench execute "inv_mgmt.cron_functions.import_sf_order_master.import_all_orders"

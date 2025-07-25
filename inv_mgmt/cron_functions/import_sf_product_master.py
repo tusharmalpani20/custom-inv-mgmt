@@ -263,3 +263,8 @@ def import_sf_product_master():
             "success": False,
             "message": f"Critical error during import: {str(e)}"
         } 
+    
+
+# this function is used to import SF Product Master records from SF API
+# this is the first function to run
+# bench execute "inv_mgmt.cron_functions.import_sf_product_master.import_sf_product_master"

@@ -105,3 +105,7 @@ def link_darkstore_addresses_to_internal_customer():
     return {
         "message": "Completed processing darkstore addresses"
     }
+
+# this function is used to link the darkstore addresses to the internal customer; 
+# We generally run this after the darkstore facilities are created and once we have created darkstore warehouses
+# bench execute "inv_mgmt.cron_functions.add_darkstore_address_to_internal_customer.link_darkstore_addresses_to_internal_customer"

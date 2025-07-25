@@ -1010,4 +1010,12 @@ def run_create_addresses_for_b2b_customers():
     result = create_addresses_for_b2b_customers()
     return result
 
+# Order in which we run the functions
+# the below function runs first, creating all external mappings
+# bench execute "inv_mgmt.cron_functions.new_customers_from_orders.run_create_new_customers_from_orders"
 
+# then we run this, creating actual customers from those external mappings
+# bench execute "inv_mgmt.cron_functions.new_customers_from_orders.run_create_customers_from_external_mappings"
+
+# finally, we run this, creating addresses for the customers
+# bench execute "inv_mgmt.cron_functions.new_customers_from_orders.run_create_addresses_for_b2b_customers"

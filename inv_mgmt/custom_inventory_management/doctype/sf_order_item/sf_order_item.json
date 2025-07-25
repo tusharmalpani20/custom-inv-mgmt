@@ -12,7 +12,9 @@
   "quantity",
   "unit_price",
   "total_price",
-  "sf_product_master"
+  "sf_product_master",
+  "is_invalid_item",
+  "is_item_processed"
  ],
  "fields": [
   {
@@ -51,10 +53,27 @@
    "label": "Total Price"
   },
   {
+   "columns": 1,
    "fieldname": "sf_product_master",
    "fieldtype": "Link",
+   "in_list_view": 1,
    "label": "SF Product Master",
    "options": "SF Product Master",
+   "read_only_depends_on": "eval:doc.sf_product_master"
+  },
+  {
+   "columns": 1,
+   "default": "0",
+   "fieldname": "is_invalid_item",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Is Invalid Item?"
+  },
+  {
+   "default": "0",
+   "fieldname": "is_item_processed",
+   "fieldtype": "Check",
+   "label": "Is Item Processed?",
    "read_only": 1
   }
  ],
@@ -62,7 +81,7 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-07-15 17:00:33.296294",
+ "modified": "2025-07-25 16:03:50.682297",
  "modified_by": "Administrator",
  "module": "custom_inventory_management",
  "name": "SF Order Item",

@@ -637,4 +637,8 @@ def test_coordinates_parsing(latitude: str, longitude: str) -> Dict[str, Any]:
         return {
             "success": False,
             "message": f"Error during coordinate testing: {str(e)}"
-        } 
+        }
+
+# this function is used to create address records for SF Facility Master records that don't have shipping_address set 
+# we run this function after SF Facility Master records are created ( and that generally happens when we are importing data for SF Order Master)
+# bench execute "inv_mgmt.cron_functions.create_address_from_lat_long.create_address_from_lat_long_for_sf_facility_master"
