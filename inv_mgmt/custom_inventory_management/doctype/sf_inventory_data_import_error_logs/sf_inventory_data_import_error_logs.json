@@ -60,7 +60,7 @@
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Error Category",
-   "options": "\nData Validation\nAPI Connection\nData Mapping\nBusiness Logic\nDuplicate Record\nMissing Reference\nInvalid Coordinates\nAddress Generation\nProduct Linking\nCombo Item Validation\nCustomer Creation\nOrder Processing\nInventory Validation\nWarehouse Assignment\nPermission Error\nSystem Error"
+   "options": "\nData Validation\nAPI Connection\nData Mapping\nBusiness Logic\nDuplicate Record\nMissing Reference\nInvalid Coordinates\nAddress Generation\nProduct Linking\nCombo Item Validation\nCustomer Creation\nOrder Processing\nInventory Validation\nWarehouse Assignment\nPermission Error\nSystem Error\nAddress API Error\nInvalid Address Data"
   },
   {
    "default": "Medium",
@@ -74,7 +74,7 @@
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Processing Stage",
-   "options": "\nAPI Data Fetch\nData Validation\nRecord Creation\nData Mapping\nBusiness Logic\nPost Processing\nAddress Generation\nItem Validation\nOrder Aggregation\nSales Order Creation\nWarehouse Assignment\nCustomer Linking\nFacility Processing"
+   "options": "\nAPI Data Fetch\nData Validation\nRecord Creation\nData Mapping\nBusiness Logic\nPost Processing\nAddress Generation\nItem Validation\nOrder Aggregation\nSales Order Creation\nWarehouse Assignment\nCustomer Linking\nFacility Processing\nAddress API Call\nAddress Parsing"
   },
   {
    "fieldname": "column_break_1",

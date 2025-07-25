@@ -35,9 +35,6 @@ def create_address_from_lat_long_for_sf_facility_master():
         
         print(f"Found {len(facilities)} facilities that need address creation")
         
-        # Start transaction for all address creation
-        frappe.db.begin()
-        
         success_count = 0
         error_count = 0
         errors = []
@@ -64,12 +61,36 @@ def create_address_from_lat_long_for_sf_facility_master():
                             "facility": facility.name,
                             "error": "Failed to create address record"
                         })
+                        log_inventory_import_error(
+                            reference_doctype="SF Facility Master",
+                            internal_reference=facility.name,
+                            source_system="Internal Processing",
+                            external_id="",
+                            entity_type="Facility",
+                            error_category="Address Generation",
+                            error_severity="High",
+                            processing_stage="Address Generation",
+                            error_description="Failed to create address record",
+                            additional_detail={"facility": facility}
+                        )
                 else:
                     error_count += 1
                     errors.append({
                         "facility": facility.name,
                         "error": "Failed to get address data from Nominatim API"
                     })
+                    log_inventory_import_error(
+                        reference_doctype="SF Facility Master",
+                        internal_reference=facility.name,
+                        source_system="Internal Processing",
+                        external_id="",
+                        entity_type="Facility",
+                        error_category="Address API Error",
+                        error_severity="High",
+                        processing_stage="Address Generation",
+                        error_description="Failed to get address data from Nominatim API",
+                        additional_detail={"facility": facility}
+                    )
                 
                 # Rate limiting - wait 1 second between API calls
                 if len(facilities) > 1:  # Only wait if there are more facilities to process
@@ -89,9 +110,18 @@ def create_address_from_lat_long_for_sf_facility_master():
                     title=f"Address Creation Error - {facility.name}",
                     message=f"Error: {str(e)}\nFacility Data: {facility}"
                 )
-        
-        # Commit transaction
-        frappe.db.commit()
+                log_inventory_import_error(
+                    reference_doctype="SF Facility Master",
+                    internal_reference=facility.name,
+                    source_system="Internal Processing",
+                    external_id="",
+                    entity_type="Facility",
+                    error_category="System Error",
+                    error_severity="Critical",
+                    processing_stage="Address Generation",
+                    error_description=str(e),
+                    additional_detail={"facility": facility}
+                )
         
         print(f"Address creation completed. Success: {success_count}, Errors: {error_count}")
         
@@ -103,7 +133,6 @@ def create_address_from_lat_long_for_sf_facility_master():
         }
         
     except Exception as e:
-        frappe.db.rollback()
         print(f"Critical error during address creation: {str(e)}")
         frappe.log_error(
             title="Address Creation from Lat/Long - Critical Error",
@@ -150,9 +179,33 @@ def get_facilities_needing_addresses() -> List[Dict[str, Any]]:
                         valid_facilities.append(facility)
                     else:
                         print(f"Skipping facility {facility.name} due to invalid coordinates: {lat}, {lon}")
+                        log_inventory_import_error(
+                            reference_doctype="SF Facility Master",
+                            internal_reference=facility.name,
+                            source_system="Internal Processing",
+                            external_id="",
+                            entity_type="Facility",
+                            error_category="Invalid Coordinates",
+                            error_severity="High",
+                            processing_stage="Address Generation",
+                            error_description=f"Invalid coordinates: {lat}, {lon}",
+                            additional_detail={"facility": facility}
+                        )
                         
                 except (ValueError, TypeError):
                     print(f"Skipping facility {facility.name} due to non-numeric coordinates: {facility.latitude}, {facility.longitude}")
+                    log_inventory_import_error(
+                        reference_doctype="SF Facility Master",
+                        internal_reference=facility.name,
+                        source_system="Internal Processing",
+                        external_id="",
+                        entity_type="Facility",
+                        error_category="Invalid Coordinates",
+                        error_severity="High",
+                        processing_stage="Address Generation",
+                        error_description=f"Non-numeric coordinates: {facility.latitude}, {facility.longitude}",
+                        additional_detail={"facility": facility}
+                    )
         
         return valid_facilities
         
@@ -254,12 +307,36 @@ def get_address_from_nominatim(latitude: str, longitude: str) -> Optional[Dict[s
             title="Nominatim API Request Error",
             message=f"Error: {str(e)}\nCoordinates: {latitude}, {longitude}"
         )
+        log_inventory_import_error(
+            reference_doctype="SF Facility Master",
+            internal_reference="",
+            source_system="Internal Processing",
+            external_id="",
+            entity_type="Facility",
+            error_category="Address API Error",
+            error_severity="High",
+            processing_stage="Address Generation",
+            error_description=f"API request error: {str(e)}",
+            additional_detail={"latitude": latitude, "longitude": longitude}
+        )
         return None
     except Exception as e:
         print(f"Error getting address from Nominatim: {str(e)}")
         frappe.log_error(
             title="Nominatim Address Extraction Error",
             message=f"Error: {str(e)}\nCoordinates: {latitude}, {longitude}"
+        )
+        log_inventory_import_error(
+            reference_doctype="SF Facility Master",
+            internal_reference="",
+            source_system="Internal Processing",
+            external_id="",
+            entity_type="Facility",
+            error_category="Address API Error",
+            error_severity="High",
+            processing_stage="Address Generation",
+            error_description=f"Error getting address from Nominatim: {str(e)}",
+            additional_detail={"latitude": latitude, "longitude": longitude}
         )
         return None
 
@@ -300,16 +377,52 @@ def create_address_record(facility: Dict[str, Any], address_data: Dict[str, Any]
         if not address_line1 or address_line1 == "Location not specified":
             print(f"No valid address line 1 found for facility {facility.name}")
             print(f"Available address components: {list(address_components.keys())}")
+            log_inventory_import_error(
+                reference_doctype="SF Facility Master",
+                internal_reference=facility.name,
+                source_system="Internal Processing",
+                external_id="",
+                entity_type="Facility",
+                error_category="Invalid Address Data",
+                error_severity="High",
+                processing_stage="Address Generation",
+                error_description="No valid address line 1 found",
+                additional_detail={"facility": facility, "address_components": address_components}
+            )
             return None
         
         if not city or city == "Unknown City":
             print(f"No valid city found for facility {facility.name}")
             print(f"Available address components: {list(address_components.keys())}")
+            log_inventory_import_error(
+                reference_doctype="SF Facility Master",
+                internal_reference=facility.name,
+                source_system="Internal Processing",
+                external_id="",
+                entity_type="Facility",
+                error_category="Invalid Address Data",
+                error_severity="High",
+                processing_stage="Address Generation",
+                error_description="No valid city found",
+                additional_detail={"facility": facility, "address_components": address_components}
+            )
             return None
         
         if not country:
             print(f"No valid country found for facility {facility.name}")
             print(f"Available address components: {list(address_components.keys())}")
+            log_inventory_import_error(
+                reference_doctype="SF Facility Master",
+                internal_reference=facility.name,
+                source_system="Internal Processing",
+                external_id="",
+                entity_type="Facility",
+                error_category="Invalid Address Data",
+                error_severity="High",
+                processing_stage="Address Generation",
+                error_description="No valid country found",
+                additional_detail={"facility": facility, "address_components": address_components}
+            )
             return None
         
         # Create Address document
@@ -351,6 +464,18 @@ def create_address_record(facility: Dict[str, Any], address_data: Dict[str, Any]
         frappe.log_error(
             title=f"Address Record Creation Error - {facility.name}",
             message=f"Error: {str(e)}\nFacility: {facility}\nAddress Data: {address_data}"
+        )
+        log_inventory_import_error(
+            reference_doctype="SF Facility Master",
+            internal_reference=facility.name,
+            source_system="Internal Processing",
+            external_id="",
+            entity_type="Facility",
+            error_category="Address Generation",
+            error_severity="High",
+            processing_stage="Address Generation",
+            error_description=f"Error creating address record: {str(e)}",
+            additional_detail={"facility": facility, "address_data": address_data}
         )
         return None
 
@@ -638,6 +763,37 @@ def test_coordinates_parsing(latitude: str, longitude: str) -> Dict[str, Any]:
             "success": False,
             "message": f"Error during coordinate testing: {str(e)}"
         }
+
+def log_inventory_import_error(
+    reference_doctype: str,
+    internal_reference: str,
+    source_system: str,
+    external_id: str,
+    entity_type: str,
+    error_category: str,
+    error_severity: str,
+    processing_stage: str,
+    error_description: str,
+    additional_detail: dict = None,
+    error_date: str = None
+):
+    try:
+        error_log = frappe.new_doc("SF Inventory Data Import Error Logs")
+        error_log.reference_doctype = reference_doctype
+        error_log.internal_reference = internal_reference
+        error_log.source_system = source_system
+        error_log.external_id = external_id
+        error_log.entity_type = entity_type
+        error_log.error_category = error_category
+        error_log.error_severity = error_severity
+        error_log.processing_stage = processing_stage
+        error_log.error_description = error_description
+        error_log.additional_detail = frappe.as_json(additional_detail or {})
+        if error_date:
+            error_log.error_date = error_date
+        error_log.insert(ignore_permissions=True)
+    except Exception as e:
+        frappe.log_error(f"Failed to log inventory import error: {str(e)}")
 
 # this function is used to create address records for SF Facility Master records that don't have shipping_address set 
 # we run this function after SF Facility Master records are created ( and that generally happens when we are importing data for SF Order Master)
