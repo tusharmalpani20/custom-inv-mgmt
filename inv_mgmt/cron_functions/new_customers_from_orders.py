@@ -25,6 +25,32 @@ except ImportError:
     NOMINATIM_API_DELAY_SECONDS = 1
 
 
+def create_error_log(reference_doctype=None, internal_reference=None, source_system=None, 
+                     external_id=None, entity_type=None, error_category=None, 
+                     error_severity="Medium", processing_stage=None, error_description=None, 
+                     additional_detail=None):
+    """
+    Create an error log entry in SF Inventory Data Import Error Logs
+    """
+    try:
+        error_log = frappe.new_doc("SF Inventory Data Import Error Logs")
+        error_log.error_date = today()
+        error_log.reference_doctype = reference_doctype
+        error_log.internal_reference = internal_reference
+        error_log.source_system = source_system
+        error_log.external_id = external_id
+        error_log.entity_type = entity_type
+        error_log.error_category = error_category
+        error_log.error_severity = error_severity
+        error_log.processing_stage = processing_stage
+        error_log.error_description = error_description
+        if additional_detail:
+            error_log.additional_detail = json.dumps(additional_detail)
+        error_log.insert()
+    except Exception as e:
+        frappe.log_error(f"Failed to create error log: {str(e)}")
+
+
 def create_new_customers_from_orders():
     """
     Create SF Inventory External ID Mapping records for new customers from B2B orders.
@@ -97,9 +123,17 @@ def create_new_customers_from_orders():
                 errors.append(error_detail)
                 
                 print(f"Error processing customer {customer_data.get('customer_id')}: {str(e)}")
-                frappe.log_error(
-                    title=f"New Customer Mapping Error - {customer_data.get('customer_id')}",
-                    message=f"Error: {str(e)}\nCustomer Data: {json.dumps(customer_data, indent=2)}"
+                create_error_log(
+                    reference_doctype="SF Inventory External ID Mapping",
+                    internal_reference=None,
+                    source_system="SF Order API",
+                    external_id=customer_data.get("customer_id"),
+                    entity_type="Customer",
+                    error_category="Customer Creation",
+                    error_severity="High",
+                    processing_stage="Record Creation",
+                    error_description=f"Error creating customer mapping: {str(e)}",
+                    additional_detail={"customer_data": customer_data, "error": str(e)}
                 )
         
         # Commit transaction
@@ -182,6 +216,18 @@ def create_customers_from_external_mappings():
                         "external_id": mapping_data.get("external_id"),
                         "error": "Failed to create customer record"
                     })
+                    create_error_log(
+                        reference_doctype="Customer",
+                        internal_reference=None,
+                        source_system="SF Order API",
+                        external_id=mapping_data.get("external_id"),
+                        entity_type="Customer",
+                        error_category="Customer Creation",
+                        error_severity="High",
+                        processing_stage="Record Creation",
+                        error_description="Failed to create customer record from mapping.",
+                        additional_detail={"mapping_data": mapping_data}
+                    )
                     
             except Exception as e:
                 error_count += 1
@@ -194,9 +240,17 @@ def create_customers_from_external_mappings():
                 errors.append(error_detail)
                 
                 print(f"Error processing mapping {mapping_data.get('name')}: {str(e)}")
-                frappe.log_error(
-                    title=f"Customer Creation Error - {mapping_data.get('name')}",
-                    message=f"Error: {str(e)}\nMapping Data: {json.dumps(mapping_data, indent=2)}"
+                create_error_log(
+                    reference_doctype="Customer",
+                    internal_reference=None,
+                    source_system="SF Order API",
+                    external_id=mapping_data.get("external_id"),
+                    entity_type="Customer",
+                    error_category="Customer Creation",
+                    error_severity="High",
+                    processing_stage="Record Creation",
+                    error_description=f"Error creating customer from mapping: {str(e)}",
+                    additional_detail={"mapping_data": mapping_data, "error": str(e)}
                 )
         
         # Commit transaction
@@ -290,6 +344,7 @@ def create_customer_from_mapping(mapping_data: Dict[str, Any]) -> Optional[str]:
         # Set GSTIN if valid
         if gstin and is_valid_gstin(gstin):
             customer.gstin = gstin
+            customer.tax_id = gstin
             customer.gst_category = gst_category
         else:
             customer.gst_category = "Unregistered"
@@ -687,6 +742,18 @@ def create_addresses_for_b2b_customers():
                 
                 if not coordinates:
                     print(f"No valid coordinates found for mapping {mapping.get('name')}")
+                    create_error_log(
+                        reference_doctype="Customer",
+                        internal_reference=mapping.get("internal_reference"),
+                        source_system="SF Order API",
+                        external_id=mapping.get("external_id"),
+                        entity_type="Customer",
+                        error_category="Invalid Coordinates",
+                        error_severity="Medium",
+                        processing_stage="Address Generation",
+                        error_description="No valid coordinates found for address creation.",
+                        additional_detail={"mapping": mapping}
+                    )
                     continue
                 
                 # Get address data from Nominatim API (reusing existing function)
@@ -708,6 +775,18 @@ def create_addresses_for_b2b_customers():
                             "customer": mapping.get("internal_reference"),
                             "error": "Failed to create address record"
                         })
+                        create_error_log(
+                            reference_doctype="Customer",
+                            internal_reference=mapping.get("internal_reference"),
+                            source_system="SF Order API",
+                            external_id=mapping.get("external_id"),
+                            entity_type="Customer",
+                            error_category="Address Generation",
+                            error_severity="High",
+                            processing_stage="Record Creation",
+                            error_description="Failed to create address record for customer.",
+                            additional_detail={"mapping": mapping, "address_data": address_data}
+                        )
                 else:
                     error_count += 1
                     errors.append({
@@ -715,6 +794,18 @@ def create_addresses_for_b2b_customers():
                         "customer": mapping.get("internal_reference"),
                         "error": "Failed to get address data from Nominatim API"
                     })
+                    create_error_log(
+                        reference_doctype="Customer",
+                        internal_reference=mapping.get("internal_reference"),
+                        source_system="SF Order API",
+                        external_id=mapping.get("external_id"),
+                        entity_type="Customer",
+                        error_category="Address API Error",
+                        error_severity="High",
+                        processing_stage="Address API Call",
+                        error_description="Failed to get address data from Nominatim API.",
+                        additional_detail={"mapping": mapping, "coordinates": coordinates}
+                    )
                 
                 # Rate limiting - wait 1 second between API calls
                 if len(customer_mappings) > 1:  # Only wait if there are more mappings to process
@@ -729,11 +820,18 @@ def create_addresses_for_b2b_customers():
                     "error": str(e)
                 }
                 errors.append(error_detail)
-                
                 print(f"Error processing customer mapping {mapping.get('name')}: {str(e)}")
-                frappe.log_error(
-                    title=f"Customer Address Creation Error - {mapping.get('name')}",
-                    message=f"Error: {str(e)}\nMapping Data: {mapping}"
+                create_error_log(
+                    reference_doctype="Customer",
+                    internal_reference=mapping.get("internal_reference"),
+                    source_system="SF Order API",
+                    external_id=mapping.get("external_id"),
+                    entity_type="Customer",
+                    error_category="Address Generation",
+                    error_severity="Critical",
+                    processing_stage="Record Creation",
+                    error_description=f"Error creating address for customer: {str(e)}",
+                    additional_detail={"mapping": mapping, "error": str(e)}
                 )
         
         # Commit transaction
@@ -853,6 +951,19 @@ def extract_coordinates_from_mapping(mapping: Dict[str, Any]) -> Optional[Dict[s
                     print(f"Invalid coordinates for mapping {mapping.get('name')}: {lat}, {lon}")
             except (ValueError, TypeError):
                 print(f"Non-numeric coordinates for mapping {mapping.get('name')}: {latitude}, {longitude}")
+                create_error_log(
+                    reference_doctype="Customer",
+                    internal_reference=mapping.get("internal_reference"),
+                    source_system="SF Order API",
+                    external_id=mapping.get("external_id"),
+                    entity_type="Customer",
+                    error_category="Invalid Coordinates",
+                    error_severity="Critical",
+                    processing_stage="Address Generation",
+                    error_description=f"Non-numeric coordinates for mapping {mapping.get('name')}: {latitude}, {longitude}",
+                    additional_detail={"mapping": mapping, "latitude": latitude, "longitude": longitude}
+                )
+                return None
         
         return None
         
@@ -1012,7 +1123,7 @@ def run_create_addresses_for_b2b_customers():
 
 # Order in which we run the functions
 # the below function runs first, creating all external mappings
-# bench execute "inv_mgmt.cron_functions.new_customers_from_orders.run_create_new_customers_from_orders"
+# bench execute "inv_mgmt.cron_functions.new_customers_from_orders.run_new_customers_from_orders"
 
 # then we run this, creating actual customers from those external mappings
 # bench execute "inv_mgmt.cron_functions.new_customers_from_orders.run_create_customers_from_external_mappings"
