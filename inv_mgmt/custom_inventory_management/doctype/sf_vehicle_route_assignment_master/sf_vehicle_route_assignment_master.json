@@ -1,0 +1,126 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2025-07-30 14:33:37.550035",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "assignment_details_section",
+  "assignment_type",
+  "assignment_date",
+  "column_break_pqvs",
+  "status",
+  "section_break_ueez",
+  "vehicle",
+  "column_break_hhzb",
+  "driver",
+  "driver_name",
+  "route_detail_section",
+  "route_assignment_detail"
+ ],
+ "fields": [
+  {
+   "fieldname": "assignment_type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Assignment Type",
+   "options": "\nFixed\nDaily",
+   "reqd": 1,
+   "set_only_once": 1
+  },
+  {
+   "fetch_from": "vehicle.custom_driver",
+   "fieldname": "driver",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Driver",
+   "options": "Driver",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_pqvs",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "assignment_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Assignment Date",
+   "mandatory_depends_on": "eval:doc.assignment_type == 'Daily'"
+  },
+  {
+   "fieldname": "assignment_details_section",
+   "fieldtype": "Section Break",
+   "label": "Assignment Details"
+  },
+  {
+   "fieldname": "section_break_ueez",
+   "fieldtype": "Section Break",
+   "label": "Vehicle Details"
+  },
+  {
+   "fieldname": "route_detail_section",
+   "fieldtype": "Section Break",
+   "label": "Route Detail"
+  },
+  {
+   "fieldname": "vehicle",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Vehicle",
+   "options": "Vehicle",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_hhzb",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fetch_from": "driver.full_name",
+   "fieldname": "driver_name",
+   "fieldtype": "Data",
+   "label": "Driver Name",
+   "read_only": 1
+  },
+  {
+   "fieldname": "route_assignment_detail",
+   "fieldtype": "Table",
+   "label": "Route Assignment Detail",
+   "options": "SF Vehicle Route Assignment Detail"
+  },
+  {
+   "default": "Active",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "Active\nInactive",
+   "reqd": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2025-07-30 15:27:03.789177",
+ "modified_by": "Administrator",
+ "module": "custom_inventory_management",
+ "name": "SF Vehicle Route Assignment Master",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

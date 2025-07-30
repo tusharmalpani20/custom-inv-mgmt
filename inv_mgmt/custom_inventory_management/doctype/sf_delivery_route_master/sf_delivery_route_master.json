@@ -47,7 +47,7 @@
    "fieldname": "delivery_points",
    "fieldtype": "Table",
    "label": "Delivery Points",
-   "options": "Delivery Point",
+   "options": "SF Delivery Point",
    "reqd": 1
   },
   {
@@ -67,10 +67,10 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-06-11 22:35:03.060314",
+ "modified": "2025-07-28 17:40:31.388585",
  "modified_by": "Administrator",
  "module": "custom_inventory_management",
- "name": "Delivery Route",
+ "name": "SF Delivery Route Master",
  "naming_rule": "Expression",
  "owner": "Administrator",
  "permissions": [

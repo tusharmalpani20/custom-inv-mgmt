@@ -5,5 +5,5 @@
 from frappe.tests.utils import FrappeTestCase
 
 
-class TestDeliveryRoute(FrappeTestCase):
+class TestSFIndentMaster(FrappeTestCase):
 	pass

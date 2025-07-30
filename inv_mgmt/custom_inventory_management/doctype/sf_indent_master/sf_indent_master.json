@@ -32,7 +32,7 @@
    "fieldtype": "Link",
    "label": "Amended From",
    "no_copy": 1,
-   "options": "Indent",
+   "options": "SF Indent Master",
    "print_hide": 1,
    "read_only": 1,
    "search_index": 1
@@ -42,7 +42,7 @@
    "fieldtype": "Link",
    "in_list_view": 1,
    "label": "Delivery Route",
-   "options": "Delivery Route",
+   "options": "SF Delivery Route Master",
    "reqd": 1
   },
   {
@@ -87,7 +87,7 @@
    "fieldname": "items",
    "fieldtype": "Table",
    "label": "Items",
-   "options": "Indent Item",
+   "options": "SF Indent Item",
    "reqd": 1
   },
   {
@@ -133,10 +133,10 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-06-19 12:30:27.619764",
+ "modified": "2025-07-30 11:36:43.743816",
  "modified_by": "Administrator",
  "module": "custom_inventory_management",
- "name": "Indent",
+ "name": "SF Indent Master",
  "naming_rule": "Expression",
  "owner": "Administrator",
  "permissions": [

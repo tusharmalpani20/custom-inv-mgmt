@@ -63,7 +63,7 @@ def get_driver_delivery_route() -> Dict[str, Any]:
             }
         
         # Get delivery route info
-        delivery_route = frappe.get_doc("Delivery Route", indent.delivery_route)
+        delivery_route = frappe.get_doc("SF Delivery Route Master", indent.delivery_route)
         
         # Get start point warehouse details including lat/long
         start_point_warehouse = frappe.get_doc("Warehouse", delivery_route.start_point)
@@ -265,7 +265,7 @@ def start_indent_delivery() -> Dict[str, Any]:
             frappe.db.commit()
             
             # Get delivery route info for response
-            delivery_route = frappe.get_doc("Delivery Route", indent.delivery_route)
+            delivery_route = frappe.get_doc("SF Delivery Route Master", indent.delivery_route)
             start_point_warehouse = frappe.get_doc("Warehouse", delivery_route.start_point)
             
             # Get delivery notes for each customer in the route
