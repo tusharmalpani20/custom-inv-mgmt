@@ -24,12 +24,17 @@ def format_datetime(date_str: str) -> str:
         except Exception:
             return None
 
-def get_api_data(url: str) -> Dict[str, Any]:
+def get_api_data(url: str, api_key: str) -> Dict[str, Any]:
     """
     Helper function to fetch data from API
     """
     try:
-        response = requests.get(url)
+        headers = {
+            'Authorization': f'{api_key}',
+            'Content-Type': 'application/json'
+        }
+
+        response = requests.get(url, headers=headers)
         response.raise_for_status()  # Raises an HTTPError for bad responses
         return response.json()
     except requests.RequestException as e:
@@ -187,14 +192,16 @@ def import_sf_product_master():
 
         # First API call to get total count
         base_url = frappe.conf.get('import_sf_product_master_url')
-        initial_data = get_api_data(f"{base_url}?limit=1&offset=0")
+        api_key = frappe.conf.get('import_sf_product_master_api_key')
+
+        initial_data = get_api_data(f"{base_url}?limit=1&offset=0", api_key)
         total_count = initial_data.get("count", 0)
 
         if not total_count:
             frappe.throw("No products found in the API response")
 
         # Second API call to get all products
-        all_products_data = get_api_data(f"{base_url}?limit={total_count}&offset=0")
+        all_products_data = get_api_data(f"{base_url}?limit={total_count}&offset=0", api_key)
         products = all_products_data.get("results", [])
 
         if not products:
@@ -263,3 +270,8 @@ def import_sf_product_master():
             "success": False,
             "message": f"Critical error during import: {str(e)}"
         } 
+    
+
+# this function is used to import SF Product Master records from SF API
+# this is the first function to run
+# bench execute "inv_mgmt.cron_functions.import_sf_product_master.import_sf_product_master"

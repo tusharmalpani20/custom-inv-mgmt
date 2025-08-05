@@ -1,8 +1,8 @@
 {
  "actions": [],
  "allow_rename": 1,
- "autoname": "format:FM-{type}-{facility_id}",
- "creation": "2025-07-14 18:12:15.623619",
+ "autoname": "format:FM-{facility_name}-{facility_id}-{##}",
+ "creation": "2025-06-14 18:12:15.623619",
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
@@ -92,7 +92,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-07-22 17:11:52.459455",
+ "modified": "2025-07-25 12:08:13.643117",
  "modified_by": "Administrator",
  "module": "custom_inventory_management",
  "name": "SF Facility Master",

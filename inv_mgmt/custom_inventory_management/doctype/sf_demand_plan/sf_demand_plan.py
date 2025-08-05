@@ -5,5 +5,5 @@
 from frappe.model.document import Document
 
 
-class DeliveryRoute(Document):
+class SFDemandPlan(Document):
 	pass

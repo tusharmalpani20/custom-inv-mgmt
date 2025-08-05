@@ -5,5 +5,5 @@
 from frappe.tests.utils import FrappeTestCase
 
 
-class TestIndent(FrappeTestCase):
+class TestSFInventoryDataImportErrorLogs(FrappeTestCase):
 	pass

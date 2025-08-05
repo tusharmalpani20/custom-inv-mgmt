@@ -1,0 +1,122 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "format:SF-IDIEL-{YY}-{MM}-{DD}-{######}",
+ "creation": "2025-07-25 15:03:53.972255",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "reference_doctype",
+  "internal_reference",
+  "source_system",
+  "external_id",
+  "entity_type",
+  "error_category",
+  "error_severity",
+  "processing_stage",
+  "column_break_1",
+  "error_description",
+  "additional_detail",
+  "error_date"
+ ],
+ "fields": [
+  {
+   "fieldname": "error_date",
+   "fieldtype": "Date",
+   "label": "Error Date"
+  },
+  {
+   "fieldname": "reference_doctype",
+   "fieldtype": "Link",
+   "label": "Reference DocType",
+   "options": "DocType"
+  },
+  {
+   "fieldname": "internal_reference",
+   "fieldtype": "Dynamic Link",
+   "label": "Internal Reference",
+   "options": "reference_doctype"
+  },
+  {
+   "fieldname": "source_system",
+   "fieldtype": "Select",
+   "label": "Source System",
+   "options": "\nSF Order API\nSF Product API\nInternal Processing\nManual Import\nScheduled Jobs"
+  },
+  {
+   "fieldname": "external_id",
+   "fieldtype": "Data",
+   "label": "External ID"
+  },
+  {
+   "fieldname": "entity_type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Entity Type",
+   "options": "\nCustomer\nFacility\nWarehouse\nOrder D2C\nOrder B2B\nProduct\nCombo Product\nAddress\nExternal Mapping\nItem Link\nSales Order\nDelivery Note"
+  },
+  {
+   "fieldname": "error_category",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Error Category",
+   "options": "\nData Validation\nAPI Connection\nData Mapping\nBusiness Logic\nDuplicate Record\nMissing Reference\nInvalid Coordinates\nAddress Generation\nProduct Linking\nCombo Item Validation\nCustomer Creation\nOrder Processing\nInventory Validation\nWarehouse Assignment\nPermission Error\nSystem Error\nAddress API Error\nInvalid Address Data"
+  },
+  {
+   "default": "Medium",
+   "fieldname": "error_severity",
+   "fieldtype": "Select",
+   "label": "Error Severity",
+   "options": "\nCritical\nHigh\nMedium\nLow\nWarning"
+  },
+  {
+   "fieldname": "processing_stage",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Processing Stage",
+   "options": "\nAPI Data Fetch\nData Validation\nRecord Creation\nData Mapping\nBusiness Logic\nPost Processing\nAddress Generation\nItem Validation\nOrder Aggregation\nSales Order Creation\nWarehouse Assignment\nCustomer Linking\nFacility Processing\nAddress API Call\nAddress Parsing"
+  },
+  {
+   "fieldname": "column_break_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "error_description",
+   "fieldtype": "Small Text",
+   "label": "Error Description",
+   "reqd": 1
+  },
+  {
+   "fieldname": "additional_detail",
+   "fieldtype": "JSON",
+   "label": "Additional Detail"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2025-07-25 16:30:34.087338",
+ "modified_by": "Administrator",
+ "module": "custom_inventory_management",
+ "name": "SF Inventory Data Import Error Logs",
+ "naming_rule": "Expression",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

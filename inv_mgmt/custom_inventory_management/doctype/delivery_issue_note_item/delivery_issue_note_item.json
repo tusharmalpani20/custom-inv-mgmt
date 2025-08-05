@@ -73,7 +73,7 @@
    "default": "0",
    "fieldname": "excess_qty",
    "fieldtype": "Float",
-   "in_list_view": 1,
+   "hidden": 1,
    "label": "Excess Qty"
   },
   {
@@ -125,7 +125,7 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-06-09 22:46:13.219639",
+ "modified": "2025-08-04 22:00:46.223647",
  "modified_by": "Administrator",
  "module": "custom_inventory_management",
  "name": "Delivery Issue Note Item",

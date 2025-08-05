@@ -5,5 +5,5 @@
 from frappe.model.document import Document
 
 
-class DeliveryPoint(Document):
+class SFDemandEntry(Document):
 	pass

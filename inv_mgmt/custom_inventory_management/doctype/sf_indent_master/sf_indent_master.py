@@ -2,9 +2,9 @@
 # For license information, please see license.txt
 
 """
-Indent DocType Controller
+SFIndentMaster DocType Controller
 
-This module handles the business logic for Indent documents, specifically focusing on
+This module handles the business logic for SFIndentMaster documents, specifically focusing on
 crate calculations and UOM (Unit of Measure) conversions.
 
 Key Features:
@@ -29,15 +29,15 @@ from datetime import datetime, timedelta
 from typing import Dict, Any, Tuple, List
 from custom_app_api.custom_api.api_end_points.attendance_api import verify_dp_token
 
-class Indent(Document):
+class SFIndentMaster(Document):
 	def on_submit(self):
 		pass
 		#self.create_draft_sales_order()
 
 	# def create_draft_sales_order(self):
-	# 	"""Create a draft Sales Order from the Indent"""
+	# 	"""Create a draft Sales Order from the SFIndentMaster"""
 	# 	# Get delivery route and points
-	# 	delivery_route = frappe.get_doc("Delivery Route", self.delivery_route)
+	# 	delivery_route = frappe.get_doc("SF Delivery Route Master", self.delivery_route)
 		
 	# 	# Find first customer with Distribution Center category
 	# 	distribution_customer = None
@@ -59,10 +59,10 @@ class Indent(Document):
 	# 		"set_warehouse": self.get("for"),
 	# 		"transaction_date": self.get("date"),
 	# 		"delivery_route": self.delivery_route,
-	# 		"indent": self.name
+	# 		"sf_indent_master": self.name
 	# 	})
 
-	# 	# Copy items from Indent
+	# 	# Copy items from SFIndentMaster
 	# 	for item in self.items:
 	# 		# Get default rate from Item master
 	# 		item_doc = frappe.get_doc("Item", item.sku)
@@ -85,7 +85,7 @@ class Indent(Document):
 	# 	sales_order.insert()
 	# 	sales_order.submit()
 		
-	# 	# Link the Sales Order to the Indent
+	# 	# Link the Sales Order to the SFIndentMaster
 	# 	self.db_set("sales_order", sales_order.name)
 	# 	self.db_set("customer", sales_order.customer)
 	# 	frappe.msgprint(f"Draft Sales Order {sales_order.name} has been created successfully")
@@ -163,7 +163,7 @@ def get_crate_details(sku, quantity):
 		}
 		
 	except Exception as e:
-		frappe.log_error(frappe.get_traceback(), "Indent Crate Calculation Error")
+		frappe.log_error(frappe.get_traceback(), "SFIndentMaster Crate Calculation Error")
 		return {
 			'error': str(e),
 			'has_crate_conversion': False,

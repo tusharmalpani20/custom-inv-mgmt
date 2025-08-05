@@ -5,5 +5,5 @@
 from frappe.model.document import Document
 
 
-class IndentItem(Document):
+class SFIndentItem(Document):
 	pass
