@@ -47,6 +47,7 @@
   {
    "fieldname": "sku_demand_entries",
    "fieldtype": "Table",
+   "hidden": 1,
    "label": "SKU Demand Entries",
    "options": "SF Demand Entry"
   },
@@ -63,7 +64,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-08-01 11:20:38.115082",
+ "modified": "2025-08-05 17:06:27.239571",
  "modified_by": "Administrator",
  "module": "custom_inventory_management",
  "name": "SF Demand Plan",
