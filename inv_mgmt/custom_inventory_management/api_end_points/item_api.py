@@ -6,7 +6,7 @@ def get_sku_items():
 
     return frappe.get_all("Item", 
 
-        filters={"has_variants": 0, "disabled": 0},
+        filters={"has_variants": 0, "disabled": 0 , "is_stock_item" : 1},
 
         fields=["item_code", "item_name"],
 
