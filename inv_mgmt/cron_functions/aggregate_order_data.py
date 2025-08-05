@@ -142,11 +142,13 @@ def aggregate_orders_and_create_sales_orders(branches: List[str], order_date: st
         info_print(f"Processed orders - D2C Valid: {len(d2c_processing_results['processed_orders'])}, B2B Valid: {len(b2b_processing_results['processed_orders'])}, Total Discarded: {len(d2c_processing_results['discarded_orders']) + len(b2b_processing_results['discarded_orders'])}")
         
         # Step 5: Create cyclic sales orders
-        created_d2c_sales_orders = create_cyclic_sales_orders(processed_d2c_orders, order_date, "D2C")
-        created_b2b_sales_orders = create_cyclic_sales_orders(processed_b2b_orders, order_date, "B2B")
+        # Combine D2C and B2B for internal transfers, but separate for customer deliveries
+        created_sales_orders = create_combined_sales_orders(
+            processed_d2c_orders, processed_b2b_orders, order_date
+        )
         
-        total_created_orders = len(created_d2c_sales_orders) + len(created_b2b_sales_orders)
-        info_print(f"Created {total_created_orders} sales orders (D2C: {len(created_d2c_sales_orders)}, B2B: {len(created_b2b_sales_orders)})")
+        total_created_orders = len(created_sales_orders)
+        info_print(f"Created {total_created_orders} sales orders (D2C: {len(created_sales_orders['d2c_orders'])}, B2B: {len(created_sales_orders['b2b_orders'])})")
         
         # Step 6: Mark successfully processed orders and items
         mark_orders_and_items_as_processed(d2c_processing_results, b2b_processing_results)
@@ -163,11 +165,7 @@ def aggregate_orders_and_create_sales_orders(branches: List[str], order_date: st
             "d2c_processing_results": d2c_processing_results,
             "b2b_processing_results": b2b_processing_results,
             "grouped_orders_count": len(processed_d2c_orders) + len(processed_b2b_orders),
-            "created_sales_orders": {
-                "d2c_orders": created_d2c_sales_orders,
-                "b2b_orders": created_b2b_sales_orders,
-                "total": total_created_orders
-            },
+            "created_sales_orders": created_sales_orders,
             "message": f"Successfully processed {total_processed_orders} orders and created {total_created_orders} sales orders"
         }
         
@@ -1042,19 +1040,12 @@ def update_error_log_categories():
         )
 
 
-def create_cyclic_sales_orders(processed_orders: Dict, order_date: str, order_type: str) -> List[Dict]:
+def create_combined_sales_orders(d2c_orders: Dict, b2b_orders: Dict, order_date: str) -> Dict:
     """
-    Create cyclic sales orders: handles both D2C and B2B orders with different logic
-    
-    Args:
-        processed_orders: Processed orders with items
-        order_date: Original order date
-        order_type: "D2C" or "B2B"
-    
-    Returns:
-        List of created sales order details
+    Create combined sales orders for both D2C and B2B orders
+    Combines D2C and B2B for internal transfers, separates for customer deliveries
     """
-    info_print(f"Creating cyclic sales orders for {order_type} orders")
+    info_print("Creating combined sales orders for D2C and B2B orders")
     created_orders = []
     
     # Get default company and internal customer
@@ -1063,58 +1054,50 @@ def create_cyclic_sales_orders(processed_orders: Dict, order_date: str, order_ty
     
     debug_print(f"Using company: {default_company}, customer: {internal_customer}")
     
-    for plant, plant_data in processed_orders.items():
+    # Combine D2C and B2B orders by plant and DC for internal transfers
+    combined_orders = defaultdict(lambda: defaultdict(lambda: defaultdict(lambda: {"items": defaultdict(float), "orders": []})))
+    
+    # Add D2C items and orders
+    for plant, plant_data in d2c_orders.items():
+        for dc, dc_data in plant_data.items():
+            for darkstore, darkstore_data in dc_data.items():
+                # Add items
+                for item_code, quantity in darkstore_data.get("items", {}).items():
+                    combined_orders[plant][dc][darkstore]["items"][item_code] += quantity
+                # Add orders
+                combined_orders[plant][dc][darkstore]["orders"].extend(darkstore_data.get("orders", []))
+    
+    # Add B2B items and orders
+    for plant, plant_data in b2b_orders.items():
+        for dc, dc_data in plant_data.items():
+            for darkstore, darkstore_data in dc_data.items():
+                # Add items
+                for item_code, quantity in darkstore_data.get("items", {}).items():
+                    combined_orders[plant][dc][darkstore]["items"][item_code] += quantity
+                # Add orders
+                combined_orders[plant][dc][darkstore]["orders"].extend(darkstore_data.get("orders", []))
+    
+    # Now create sales orders
+    for plant, plant_data in combined_orders.items():
         for dc, dc_data in plant_data.items():
             
-            if order_type == "D2C":
-                # D2C orders always use internal customer
-                customer = internal_customer
-                is_internal = True
-                
-                # Create distribution center order (from plant to DC)
-                dc_order = create_sales_order_for_distribution_center(
-                    plant, dc, dc_data, order_date, customer, default_company, is_internal, order_type
-                )
-                if dc_order:
-                    created_orders.append(dc_order)
-                    info_print(f"Created DC order: {dc_order['sales_order']}")
-                
-                # Create darkstore orders
-                for darkstore, darkstore_data in dc_data.items():
-                    if darkstore not in ["DC_DIRECT", "CLIENT"]:
-                        darkstore_order = create_sales_order_for_darkstore(
-                            dc, darkstore, darkstore_data, order_date, customer, default_company, is_internal, order_type
-                        )
-                        if darkstore_order:
-                            created_orders.append(darkstore_order)
-                            info_print(f"Created darkstore order: {darkstore_order['sales_order']}")
-                            
-            else:
-                # B2B orders - need to group by customer
-                # First, aggregate all items for DC order (internal transfer)
-                dc_aggregated_items = defaultdict(float)
-                for darkstore_data in dc_data.values():
-                    if isinstance(darkstore_data, dict) and "items" in darkstore_data:
-                        for item_code, quantity in darkstore_data["items"].items():
-                            dc_aggregated_items[item_code] += quantity
-                
-                # Create DC order with internal customer for aggregated items
-                if dc_aggregated_items:
-                    dc_order = create_sales_order_for_distribution_center_with_items(
-                        plant, dc, dc_aggregated_items, order_date, internal_customer, default_company, True, order_type
-                    )
-                    if dc_order:
-                        created_orders.append(dc_order)
-                        info_print(f"Created DC order: {dc_order['sales_order']}")
-                
-                # Process each darkstore and group B2B orders by customer
-                for darkstore, darkstore_data in dc_data.items():
-                    if darkstore == "DC_DIRECT":
-                        # Direct DC orders (no darkstore involved)
-                        # Group by customer
-                        customer_groups = group_b2b_orders_by_customer(darkstore_data.get("orders", []))
+            # Create ONE distribution center order (from plant to DC) with ALL items
+            dc_order = create_sales_order_for_distribution_center(
+                plant, dc, dc_data, order_date, internal_customer, default_company, True, "Internal"
+            )
+            if dc_order:
+                created_orders.append(dc_order)
+                info_print(f"Created combined DC order: {dc_order['sales_order']}")
+            
+            # Process each darkstore
+            for darkstore, darkstore_data in dc_data.items():
+                if darkstore == "DC_DIRECT":
+                    # Direct DC orders - create customer-specific orders for B2B only
+                    b2b_orders_list = [order for order in darkstore_data["orders"] if order.get("order_type") == "B2B"]
+                    if b2b_orders_list:
+                        customer_groups = group_b2b_orders_by_customer(b2b_orders_list)
                         for customer, customer_orders in customer_groups.items():
-                            if customer != internal_customer:  # Skip internal customer for direct orders
+                            if customer != internal_customer:
                                 dc_direct_order = create_sales_order_for_dc_direct_with_orders(
                                     dc, customer_orders, order_date, customer, default_company, False
                                 )
@@ -1122,33 +1105,36 @@ def create_cyclic_sales_orders(processed_orders: Dict, order_date: str, order_ty
                                     created_orders.append(dc_direct_order)
                                     info_print(f"Created DC direct order: {dc_direct_order['sales_order']}")
                                     
-                    elif darkstore == "CLIENT":
-                        # Direct plant to client orders
-                        # Group by customer
-                        customer_groups = group_b2b_orders_by_customer(darkstore_data.get("orders", []))
+                elif darkstore == "CLIENT":
+                    # Direct plant to client orders - create customer-specific orders for B2B only
+                    b2b_orders_list = [order for order in darkstore_data["orders"] if order.get("order_type") == "B2B"]
+                    if b2b_orders_list:
+                        customer_groups = group_b2b_orders_by_customer(b2b_orders_list)
                         for customer, customer_orders in customer_groups.items():
-                            if customer != internal_customer:  # Skip internal customer for direct orders
+                            if customer != internal_customer:
                                 plant_direct_order = create_sales_order_for_plant_direct_with_orders(
                                     plant, customer_orders, order_date, customer, default_company, False
                                 )
                                 if plant_direct_order:
                                     created_orders.append(plant_direct_order)
                                     info_print(f"Created plant direct order: {plant_direct_order['sales_order']}")
-                    else:
-                        # Regular darkstore orders
-                        # First create internal transfer (DC to Darkstore)
-                        if darkstore_data.get("items"):
-                            darkstore_order = create_sales_order_for_darkstore(
-                                dc, darkstore, darkstore_data, order_date, internal_customer, default_company, True, order_type
-                            )
-                            if darkstore_order:
-                                created_orders.append(darkstore_order)
-                                info_print(f"Created darkstore order: {darkstore_order['sales_order']}")
-                        
-                        # Then create customer-specific orders from darkstore to client
-                        customer_groups = group_b2b_orders_by_customer(darkstore_data.get("orders", []))
+                else:
+                    # Regular darkstore orders
+                    # Create ONE internal transfer (DC to Darkstore) with ALL items
+                    if darkstore_data.get("items"):
+                        darkstore_order = create_sales_order_for_darkstore(
+                            dc, darkstore, darkstore_data, order_date, internal_customer, default_company, True, "Internal"
+                        )
+                        if darkstore_order:
+                            created_orders.append(darkstore_order)
+                            info_print(f"Created combined darkstore order: {darkstore_order['sales_order']}")
+                    
+                    # Create customer-specific orders from darkstore to client (B2B only)
+                    b2b_orders_list = [order for order in darkstore_data["orders"] if order.get("order_type") == "B2B"]
+                    if b2b_orders_list:
+                        customer_groups = group_b2b_orders_by_customer(b2b_orders_list)
                         for customer, customer_orders in customer_groups.items():
-                            if customer != internal_customer:  # Skip internal customer for client orders
+                            if customer != internal_customer:
                                 darkstore_to_client_order = create_sales_order_for_darkstore_to_client_with_orders(
                                     darkstore, customer_orders, order_date, customer, default_company, False
                                 )
@@ -1156,12 +1142,21 @@ def create_cyclic_sales_orders(processed_orders: Dict, order_date: str, order_ty
                                     created_orders.append(darkstore_to_client_order)
                                     info_print(f"Created darkstore to client order: {darkstore_to_client_order['sales_order']}")
     
-    return created_orders
+    # Separate orders by type for reporting
+    d2c_orders_created = [order for order in created_orders if order.get("order_type") in ["D2C", "Internal"]]
+    b2b_orders_created = [order for order in created_orders if order.get("order_type") == "B2B"]
+    
+    return {
+        "d2c_orders": d2c_orders_created,
+        "b2b_orders": b2b_orders_created,
+        "total": len(created_orders)
+    }
 
 
 def group_b2b_orders_by_customer(orders: List[Dict]) -> Dict[str, List[Dict]]:
     """
     Group B2B orders by customer
+    Uses SF Inventory External ID Mapping to look up customer_id to ERPNext Customer
     """
     customer_groups = defaultdict(list)
     
@@ -1182,6 +1177,7 @@ def group_b2b_orders_by_customer(orders: List[Dict]) -> Dict[str, List[Dict]]:
             if customer_mapping and customer_mapping.internal_reference and customer_mapping.reference_doctype == "Customer":
                 if frappe.db.exists("Customer", customer_mapping.internal_reference):
                     customer_groups[customer_mapping.internal_reference].append(order)
+                    debug_print(f"Grouped order {order.name} under customer {customer_mapping.internal_reference}")
                 else:
                     debug_print(f"Customer {customer_mapping.internal_reference} does not exist, skipping order {order.name}")
             else:
@@ -1653,10 +1649,10 @@ def create_sales_order_for_darkstore(dc_warehouse: str, darkstore_warehouse: str
     try:
         debug_print(f"Creating sales order for darkstore {darkstore_warehouse}")
         
-        # Determine shipping address based on order type
+        # Determine shipping address based on whether it's internal or external
         shipping_address = None
-        if order_type == "D2C":
-            # D2C orders use darkstore facility address
+        if is_internal:
+            # Internal transfers use destination warehouse (darkstore) address
             darkstore_facility = frappe.db.get_value(
                 "SF Facility Master",
                 {"warehouse": darkstore_warehouse, "type": "Darkstore"},
@@ -1664,28 +1660,37 @@ def create_sales_order_for_darkstore(dc_warehouse: str, darkstore_warehouse: str
                 as_dict=True
             )
             
-            if not darkstore_facility or not darkstore_facility.shipping_address:
-                error_print(f"No shipping address found for darkstore {darkstore_warehouse}")
-                log_error(
-                    error_category="Missing Reference",
-                    error_description=f"No shipping address found for darkstore {darkstore_warehouse}",
-                    processing_stage="Sales Order Creation",
-                    entity_type="Facility",
-                    external_id=darkstore_warehouse,
-                    reference_doctype="SF Facility Master",
-                    internal_reference=darkstore_warehouse,
-                    error_severity="Medium",
-                    additional_detail={
-                        "warehouse": darkstore_warehouse,
-                        "facility_type": "Darkstore",
-                        "order_type": order_type
-                    }
+            if darkstore_facility and darkstore_facility.shipping_address:
+                shipping_address = darkstore_facility.shipping_address
+            else:
+                # Fallback to warehouse address if facility address not found
+                warehouse_address = frappe.db.get_value(
+                    "Warehouse",
+                    darkstore_warehouse,
+                    ["address_line_1", "address_line_2", "city", "state", "pin"],
+                    as_dict=True
                 )
-                return None
-            
-            shipping_address = darkstore_facility.shipping_address
+                if warehouse_address:
+                    debug_print(f"Using warehouse address for darkstore {darkstore_warehouse}")
+                else:
+                    error_print(f"No shipping address found for darkstore {darkstore_warehouse}")
+                    log_error(
+                        error_category="Missing Reference",
+                        error_description=f"No shipping address found for darkstore {darkstore_warehouse}",
+                        processing_stage="Sales Order Creation",
+                        entity_type="Facility",
+                        external_id=darkstore_warehouse,
+                        reference_doctype="SF Facility Master",
+                        internal_reference=darkstore_warehouse,
+                        error_severity="Medium",
+                        additional_detail={
+                            "warehouse": darkstore_warehouse,
+                            "facility_type": "Darkstore",
+                            "order_type": order_type
+                        }
+                    )
         else:
-            # B2B orders use customer's shipping address
+            # External orders use customer's shipping address
             shipping_address = get_customer_shipping_address(customer)
         
         # Create sales order
@@ -1777,13 +1782,33 @@ def create_sales_order_for_distribution_center(plant_warehouse: str, dc_warehous
             debug_print(f"No items to aggregate for DC {dc_warehouse}")
             return None
         
-        # Get DC warehouse address for shipping
-        dc_address = frappe.db.get_value(
-            "Warehouse",
-            dc_warehouse,
-            ["address_line_1", "address_line_2", "city", "state", "pin"],
-            as_dict=True
-        )
+        # Determine shipping address based on whether it's internal or external
+        shipping_address = None
+        if is_internal:
+            # Internal transfers use destination warehouse (DC) address
+            # First try to get address from SF Facility Master
+            dc_facility = frappe.db.get_value(
+                "SF Facility Master",
+                {"warehouse": dc_warehouse, "type": "Distribution Center"},
+                ["shipping_address"],
+                as_dict=True
+            )
+            
+            if dc_facility and dc_facility.shipping_address:
+                shipping_address = dc_facility.shipping_address
+            else:
+                # Fallback to warehouse address
+                warehouse_address = frappe.db.get_value(
+                    "Warehouse",
+                    dc_warehouse,
+                    ["address_line_1", "address_line_2", "city", "state", "pin"],
+                    as_dict=True
+                )
+                if warehouse_address:
+                    debug_print(f"Using warehouse address for DC {dc_warehouse}")
+        else:
+            # External orders use customer's shipping address
+            shipping_address = get_customer_shipping_address(customer)
         
         # Create sales order
         sales_order_data = {
@@ -1795,6 +1820,9 @@ def create_sales_order_for_distribution_center(plant_warehouse: str, dc_warehous
             "set_warehouse": plant_warehouse,  # Source warehouse (Plant)
             "items": []
         }
+        
+        if shipping_address:
+            sales_order_data["shipping_address_name"] = shipping_address
         
         # Only set target warehouse for internal customers
         if is_internal:
@@ -2207,7 +2235,7 @@ def daily_order_aggregation():
         # yesterday = add_days(nowdate(), -1)
 
         branch_names = ["Hyderabad"]
-        yesterday = "2025-07-15"
+        yesterday = "2025-07-31"
         
         info_print(f"Processing branches: {branch_names}, date: {yesterday}")
         

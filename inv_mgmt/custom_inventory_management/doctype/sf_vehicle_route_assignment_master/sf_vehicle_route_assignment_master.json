@@ -42,6 +42,7 @@
    "fieldtype": "Column Break"
   },
   {
+   "depends_on": "eval:doc.assignment_type == 'Daily'",
    "fieldname": "assignment_date",
    "fieldtype": "Date",
    "in_list_view": 1,
@@ -100,7 +101,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-07-30 15:27:03.789177",
+ "modified": "2025-07-31 15:30:41.975315",
  "modified_by": "Administrator",
  "module": "custom_inventory_management",
  "name": "SF Vehicle Route Assignment Master",

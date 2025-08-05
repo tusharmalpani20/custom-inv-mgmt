@@ -7,9 +7,9 @@ from datetime import datetime
 import time
 
 # Time delay for D2C order API calls (5 seconds)
-D2C_ORDER_API_DELAY_SECONDS = 5
+D2C_ORDER_API_DELAY_SECONDS = 20
 # Time delay for B2B order API calls (5 seconds)
-B2B_ORDER_API_DELAY_SECONDS = 5
+B2B_ORDER_API_DELAY_SECONDS = 20
 
 def create_error_log(reference_doctype=None, internal_reference=None, source_system=None, 
                      external_id=None, entity_type=None, error_category=None, 
@@ -62,7 +62,7 @@ def import_d2c_orders():
         }
         
         request_data = {
-            "delivery_date": "2025-07-15",
+            "delivery_date": "2025-07-31",
             "regenerate": False
         }
         
@@ -199,7 +199,7 @@ def import_b2b_orders():
         }
         
         request_data = {
-            "delivery_date": "2025-07-15",
+            "delivery_date": "2025-07-31",
             "regenerate": False
         }
         
@@ -687,12 +687,12 @@ def get_or_create_facility(facility_id, facility_name, facility_type, facility_l
     Get existing facility or create a new one if not found
     """
     try:
-        # Check if facility exists
+        # Check if facility exists using facility_id and facility_name
         existing_facility = frappe.get_all(
             "SF Facility Master",
             filters={
                 "facility_id": facility_id,
-                "type": facility_type
+                "facility_name": facility_name
             },
             fields=["name"]
         )
@@ -768,8 +768,8 @@ def delete_sf_order_master_records():
     Delete all SF Order Master records for a given date range
     """
     try:
-        start_date = '2025-07-15'
-        end_date = '2025-07-15'
+        start_date = '2025-07-30'
+        end_date = '2025-07-30'
 
         # Get count before deleting
         records_to_delete = frappe.get_all(

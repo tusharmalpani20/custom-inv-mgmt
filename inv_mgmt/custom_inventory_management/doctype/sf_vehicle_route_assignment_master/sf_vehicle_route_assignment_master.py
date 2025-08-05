@@ -16,6 +16,8 @@ class SFVehicleRouteAssignmentMaster(Document):
 		
 		# Clean vehicle ID for URL safety
 		vehicle_id = frappe.scrub(vehicle_id)
+		#make vehicle ID all caps
+		vehicle_id = vehicle_id.upper()
 		
 		if self.assignment_type == "Daily" and self.assignment_date:
 			# Format: SF-VRAM-Daily-2025-01-15-VehicleID

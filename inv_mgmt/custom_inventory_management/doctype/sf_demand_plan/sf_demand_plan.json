@@ -1,0 +1,90 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2025-07-31 14:55:32.102827",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "section_break_5t6z",
+  "amended_from",
+  "planning_week",
+  "branch",
+  "channel",
+  "roster_table",
+  "sku_demand_entries"
+ ],
+ "fields": [
+  {
+   "fieldname": "section_break_5t6z",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "SF Demand Plan",
+   "print_hide": 1,
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "planning_week",
+   "fieldtype": "Date",
+   "label": "Plan Start Date"
+  },
+  {
+   "fieldname": "branch",
+   "fieldtype": "Link",
+   "label": "Branch",
+   "options": "Branch"
+  },
+  {
+   "fieldname": "roster_table",
+   "fieldtype": "HTML",
+   "label": "Roster Table"
+  },
+  {
+   "fieldname": "sku_demand_entries",
+   "fieldtype": "Table",
+   "label": "SKU Demand Entries",
+   "options": "SF Demand Entry"
+  },
+  {
+   "fieldname": "channel",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Channel",
+   "options": "\nRetail & Distributors\nCorporate\nB2C\nAgents\nPromotions\nFM Buffer\nMM Buffer\nSupply Chain\nPlant\nGeneric",
+   "reqd": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "is_submittable": 1,
+ "links": [],
+ "modified": "2025-08-01 11:20:38.115082",
+ "modified_by": "Administrator",
+ "module": "custom_inventory_management",
+ "name": "SF Demand Plan",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
