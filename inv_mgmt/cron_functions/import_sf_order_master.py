@@ -62,7 +62,7 @@ def import_d2c_orders():
         }
         
         request_data = {
-            "delivery_date": "2025-07-31",
+            "delivery_date": "2025-08-06",
             "regenerate": False
         }
         
@@ -199,7 +199,7 @@ def import_b2b_orders():
         }
         
         request_data = {
-            "delivery_date": "2025-07-31",
+            "delivery_date": "2025-08-06",
             "regenerate": False
         }
         
