@@ -114,6 +114,8 @@
   {
    "fieldname": "city_cd",
    "fieldtype": "Data",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
    "label": "City Code"
   },
   {
@@ -357,7 +359,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-07-25 07:57:34.299733",
+ "modified": "2025-08-07 14:51:23.734067",
  "modified_by": "Administrator",
  "module": "custom_inventory_management",
  "name": "SF Product Master",
