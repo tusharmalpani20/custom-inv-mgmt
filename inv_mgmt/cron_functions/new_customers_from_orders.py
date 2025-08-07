@@ -93,9 +93,6 @@ def create_new_customers_from_orders():
         
         print(f"Found {len(unique_customers)} unique customers")
         
-        # Start transaction for all mapping creation
-        frappe.db.begin()
-        
         success_count = 0
         error_count = 0
         errors = []
@@ -136,9 +133,6 @@ def create_new_customers_from_orders():
                     additional_detail={"customer_data": customer_data, "error": str(e)}
                 )
         
-        # Commit transaction
-        frappe.db.commit()
-        
         print(f"New customers from orders process completed. Success: {success_count}, Errors: {error_count}")
         
         return {
@@ -149,7 +143,6 @@ def create_new_customers_from_orders():
         }
         
     except Exception as e:
-        frappe.db.rollback()
         print(f"Critical error during new customers from orders process: {str(e)}")
         frappe.log_error(
             title="New Customers from Orders - Critical Error",
@@ -189,9 +182,6 @@ def create_customers_from_external_mappings():
             }
         
         print(f"Found {len(external_mappings)} external mappings that need Customer creation")
-        
-        # Start transaction for all customer creation
-        frappe.db.begin()
         
         success_count = 0
         error_count = 0
@@ -253,9 +243,6 @@ def create_customers_from_external_mappings():
                     additional_detail={"mapping_data": mapping_data, "error": str(e)}
                 )
         
-        # Commit transaction
-        frappe.db.commit()
-        
         print(f"Customer creation from external mappings completed. Success: {success_count}, Errors: {error_count}")
         
         return {
@@ -266,7 +253,6 @@ def create_customers_from_external_mappings():
         }
         
     except Exception as e:
-        frappe.db.rollback()
         print(f"Critical error during customer creation from external mappings: {str(e)}")
         frappe.log_error(
             title="Customer Creation from External Mappings - Critical Error",
@@ -726,9 +712,6 @@ def create_addresses_for_b2b_customers():
         
         print(f"Found {len(customer_mappings)} customer mappings that need address creation")
         
-        # Start transaction for all address creation
-        frappe.db.begin()
-        
         success_count = 0
         error_count = 0
         errors = []
@@ -834,9 +817,6 @@ def create_addresses_for_b2b_customers():
                     additional_detail={"mapping": mapping, "error": str(e)}
                 )
         
-        # Commit transaction
-        frappe.db.commit()
-        
         print(f"Customer address creation completed. Success: {success_count}, Errors: {error_count}")
         
         return {
@@ -847,7 +827,6 @@ def create_addresses_for_b2b_customers():
         }
         
     except Exception as e:
-        frappe.db.rollback()
         print(f"Critical error during customer address creation: {str(e)}")
         frappe.log_error(
             title="Customer Address Creation from Lat/Long - Critical Error",
