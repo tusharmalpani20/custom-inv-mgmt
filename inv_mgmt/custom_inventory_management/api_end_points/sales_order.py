@@ -156,7 +156,7 @@ def get_driver_delivery_routes_with_sales_orders(override_date: str = None) -> D
         # Step 5: Process each delivery route to get customers, warehouses and sales orders
         processed_routes = []
         for route in delivery_routes:
-            route_data = process_delivery_route_with_sales_orders(route, effective_date)
+            route_data = process_delivery_route_with_sales_orders(route, effective_date, employee_id)
             if route_data:
                 processed_routes.append(route_data)
         
@@ -359,13 +359,98 @@ def get_delivery_routes_from_assignment(assignment_name: str) -> List[str]:
         return []
 
 
-def process_delivery_route_with_sales_orders(route_name: str, effective_date: str) -> Optional[Dict]:
+def get_indent_details_for_route(delivery_route: str, effective_date: str, employee_id: str) -> Optional[Dict]:
+    """
+    Get indent details for a specific delivery route, date and employee
+    
+    Args:
+        delivery_route: SF Delivery Route Master name
+        effective_date: Date in YYYY-MM-DD format
+        employee_id: Employee ID
+    
+    Returns:
+        Dict containing indent details if found, None otherwise
+    """
+    debug_print(f"Getting indent details for route: {delivery_route}, date: {effective_date}, employee: {employee_id}")
+    
+    try:
+        # Get indent records matching the criteria
+        indent_records = frappe.db.sql("""
+            SELECT name, delivery_route, vehicle, driver, `for`, date, company,
+                   trip_started_at, trip_started_by, docstatus, workflow_state
+            FROM `tabSF Indent Master`
+            WHERE delivery_route = %(route)s
+            AND date = %(date)s
+            AND driver = %(employee)s
+            AND docstatus = 1
+            ORDER BY creation DESC
+            LIMIT 1
+        """, {
+            "route": delivery_route,
+            "date": effective_date,
+            "employee": employee_id
+        }, as_dict=True)
+        
+        if not indent_records:
+            debug_print(f"No submitted indent found for route: {delivery_route}, date: {effective_date}, employee: {employee_id}")
+            return None
+        
+        indent_record = indent_records[0]
+        debug_print(f"Found indent: {indent_record.name}")
+        
+        # # Get indent items
+        # indent_items = frappe.db.sql("""
+        #     SELECT sku, uom, quantity, crates, loose, difference, actual
+        #     FROM `tabSF Indent Item`
+        #     WHERE parent = %(parent)s
+        #     ORDER BY idx ASC
+        # """, {"parent": indent_record.name}, as_dict=True)
+        
+        # # Get item details for each indent item
+        # for item in indent_items:
+        #     if item.sku:
+        #         item_details = frappe.db.get_value("Item", item.sku, ["item_name", "item_group", "stock_uom"], as_dict=True)
+        #         if item_details:
+        #             item["item_name"] = item_details.item_name
+        #             item["item_group"] = item_details.item_group
+        #             item["stock_uom"] = item_details.stock_uom
+        
+        indent_data = {
+            "indent_name": indent_record.name,
+            "delivery_route": indent_record.delivery_route,
+            "vehicle": indent_record.vehicle,
+            "driver": indent_record.driver,
+            "for_warehouse": indent_record.get("for"),
+            "date": str(indent_record.date),
+            "company": indent_record.company,
+            "docstatus": indent_record.docstatus,
+            "workflow_state": indent_record.workflow_state,
+            "trip_started_at": str(indent_record.trip_started_at) if indent_record.trip_started_at else None,
+            "trip_started_by": indent_record.trip_started_by,
+            # "items": indent_items,
+            # "total_items": len(indent_items),
+            # "total_quantity": sum(item.quantity for item in indent_items if item.quantity),
+            # "total_crates": sum(item.crates for item in indent_items if item.crates),
+            # "total_loose": sum(item.loose for item in indent_items if item.loose),
+            # "total_actual": sum(item.actual for item in indent_items if item.actual)
+        }
+        
+        # debug_print(f"Processed indent {indent_record.name} with {len(indent_items)} items")
+        return indent_data
+        
+    except Exception as e:
+        error_print(f"Error getting indent details for route {delivery_route}: {str(e)}")
+        return None
+
+
+def process_delivery_route_with_sales_orders(route_name: str, effective_date: str, employee_id: str = None) -> Optional[Dict]:
     """
     Process a delivery route to get customers, warehouses and their sales orders
     
     Args:
         route_name: SF Delivery Route Master name
         effective_date: Date in YYYY-MM-DD format
+        employee_id: Employee ID for indent lookup
     
     Returns:
         Dict containing route data with customers, warehouses and sales orders
@@ -397,6 +482,11 @@ def process_delivery_route_with_sales_orders(route_name: str, effective_date: st
             else:
                 debug_print(f"Skipping delivery point with unsupported drop_type: {point.drop_type}")
         
+        # Get indent details for this route
+        indent_details = None
+        if employee_id:
+            indent_details = get_indent_details_for_route(route_name, effective_date, employee_id)
+        
         route_data = {
             "route_name": route_doc.name,
             "route_display_name": route_doc.route_name,
@@ -404,10 +494,11 @@ def process_delivery_route_with_sales_orders(route_name: str, effective_date: st
             "branch": route_doc.branch,
             "start_point_warehouse": start_point_warehouse,
             "delivery_points": delivery_points,
-            "total_delivery_points": len(delivery_points)
+            "total_delivery_points": len(delivery_points),
+            "indent": indent_details
         }
         
-        debug_print(f"Processed route {route_name} with {len(delivery_points)} delivery points")
+        debug_print(f"Processed route {route_name} with {len(delivery_points)} delivery points and indent: {indent_details is not None}")
         return route_data
         
     except Exception as e:
@@ -461,10 +552,10 @@ def get_warehouse_details_with_sales_orders(warehouse_name: str, effective_date:
             sales_orders = get_sales_orders_for_warehouse(warehouse_name, internal_customer, effective_date)
         
         warehouse_data = {
-            "warehouse_name": warehouse_doc.name,
-            "warehouse_display_name": warehouse_doc.warehouse_name,
-            "warehouse_type": getattr(warehouse_doc, 'warehouse_type', None),
-            "warehouse_category": warehouse_category,
+            "name": warehouse_doc.name,
+            "display_name": warehouse_doc.warehouse_name,
+            "type": getattr(warehouse_doc, 'warehouse_type', None),
+            "category": warehouse_category,
             "branch": getattr(warehouse_doc, 'custom_branch', None),
             "address": warehouse_address,
             "sales_orders": sales_orders,
@@ -513,16 +604,39 @@ def get_customer_details_with_sales_orders_from_delivery_point(delivery_point: o
         # Get customer document
         customer_doc = frappe.get_doc("Customer", delivery_point.drop_point)
         
+        # Get shipping address details if available
+        shipping_address = None
+        if hasattr(customer_doc, 'custom_customer_shipping_address') and customer_doc.custom_customer_shipping_address:
+            try:
+                address_doc = frappe.get_doc("Address", customer_doc.custom_customer_shipping_address)
+                shipping_address = {
+                    "name": address_doc.name,
+                    "address_type": address_doc.address_type,
+                    "address_line1": address_doc.address_line1,
+                    "address_line2": address_doc.address_line2,
+                    "city": address_doc.city,
+                    "state": address_doc.state,
+                    "pincode": address_doc.pincode,
+                    "country": address_doc.country,
+                    "latitude": getattr(address_doc, 'custom_latitude', None),
+                    "longitude": getattr(address_doc, 'custom_longitude', None)
+                }
+                debug_print(f"Found shipping address for customer {delivery_point.drop_point}: {address_doc.name}")
+            except Exception as addr_e:
+                error_print(f"Error getting shipping address {customer_doc.custom_customer_shipping_address}: {str(addr_e)}")
+                shipping_address = None
+        
         # Get sales orders for this customer
         sales_orders = get_sales_orders_for_customer(delivery_point.drop_point, effective_date)
         
         customer_data = {
             "entity_type": "Customer",
-            "customer": customer_doc.name,
-            "customer_name": customer_doc.customer_name,
-            "customer_type": customer_doc.customer_type,
-            "customer_group": customer_doc.customer_group,
+            "name": customer_doc.name,
+            "display_name": customer_doc.customer_name,
+            "type": customer_doc.customer_type,
+            "group": customer_doc.customer_group,
             "territory": customer_doc.territory,
+            "address": shipping_address,
             "sales_orders": sales_orders,
             "total_sales_orders": len(sales_orders) if sales_orders else 0
         }

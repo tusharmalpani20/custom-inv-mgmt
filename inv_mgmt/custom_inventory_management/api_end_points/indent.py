@@ -25,7 +25,7 @@ def get_driver_delivery_route() -> Dict[str, Any]:
         
         # Get today's indent for the driver
         indent = frappe.get_value(
-            "Indent",
+            "SF Indent Master",
             {
                 "driver": employee,
                 "date": today,
@@ -214,7 +214,7 @@ def start_indent_delivery() -> Dict[str, Any]:
         
         # Get indent document
         try:
-            indent = frappe.get_doc("Indent", indent_id)
+            indent = frappe.get_doc("SF Indent Master", indent_id)
         except frappe.DoesNotExistError:
             frappe.db.rollback()
             frappe.local.response['http_status_code'] = 404
