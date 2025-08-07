@@ -535,7 +535,7 @@ def get_b2b_orders_for_today() -> List[Dict[str, Any]]:
             filters={
                 "order_type": "B2B",
                 # "order_date": today()
-                "order_date": "2025-07-15"
+                "order_date": "2025-08-06"
             },
             fields=[
                 "name", "order_id", "customer_id", "customer_name", 
