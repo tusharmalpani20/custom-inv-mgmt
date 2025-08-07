@@ -2235,7 +2235,7 @@ def daily_order_aggregation():
         # yesterday = add_days(nowdate(), -1)
 
         branch_names = ["Hyderabad"]
-        yesterday = "2025-07-31"
+        yesterday = "2025-08-06"
         
         info_print(f"Processing branches: {branch_names}, date: {yesterday}")
         
