@@ -30,9 +30,187 @@ from typing import Dict, Any, Tuple, List
 from custom_app_api.custom_api.api_end_points.attendance_api import verify_dp_token
 
 class SFIndentMaster(Document):
+	def validate(self):
+		"""
+		Validate document before save - runs on every save
+		"""
+		# Always validate basic fields
+		self.validate_basic_fields()
+	
+	def on_update(self):
+		"""
+		Runs after document is saved - good place for workflow state validation
+		"""
+		# Validate vehicle fields when workflow state changes to certain states
+		self.validate_vehicle_fields_for_workflow()
+	
 	def on_submit(self):
+		# Validate vehicle-related fields are mandatory
+		self.validate_vehicle_fields()
 		pass
 		#self.create_draft_sales_order()
+
+	def validate_basic_fields(self):
+		"""
+		Basic validation that should always run
+		"""
+		# Skip validation for adjusted indents as they inherit vehicle details from original indent
+		if self.is_adjusted_indent:
+			return
+		
+		# Basic validation - check if required fields are present
+		if not self.delivery_route:
+			frappe.throw("Delivery Route is mandatory")
+		
+		if not self.get("for"):
+			frappe.throw("Plant/Warehouse is mandatory")
+		
+		if not self.date:
+			frappe.throw("Date is mandatory")
+
+	def validate_vehicle_fields_for_workflow(self):
+		"""
+		Validate vehicle fields based on workflow state
+		This ensures validation happens at the right workflow transitions
+		"""
+		# Skip validation for adjusted indents
+		if self.is_adjusted_indent:
+			return
+		
+		# Get current workflow state
+		current_state = self.workflow_state
+		
+		# Define states where vehicle validation should be enforced
+		vehicle_required_states = [
+			"Approved By Plant",
+			"Delivery Started", 
+			"Completed",
+			"Submitted"
+		]
+		
+		# CRITICAL: Prevent automatic transition to "Sent To Plant" if vehicle fields are missing
+		if current_state == "Sent To Plant":
+			# Check if this is a new document or if vehicle fields were just added
+			if not self.vehicle or not self.vehicle_license_plate or not self.driver:
+				frappe.throw(
+					"Vehicle, Vehicle License Plate, and Driver are mandatory before sending to plant. "
+					"Please fill in all vehicle details before proceeding.",
+					title="Vehicle Details Required"
+				)
+		
+		# If current state requires vehicle validation
+		if current_state in vehicle_required_states:
+			self.validate_vehicle_fields()
+		
+		# Additional validation for specific workflow states
+		if current_state == "Approved By Plant":
+			# Additional checks for plant approval
+			self.validate_for_plant_approval()
+		
+		elif current_state == "Delivery Started":
+			# Additional checks for delivery start
+			self.validate_for_delivery_start()
+
+	def validate_for_plant_approval(self):
+		"""
+		Additional validation when workflow state is 'Approved By Plant'
+		"""
+		# Ensure all items have quantities
+		if not self.items:
+			frappe.throw("At least one item must be added to the indent")
+		
+		for item in self.items:
+			if not item.quantity or item.quantity <= 0:
+				frappe.throw(f"Quantity must be greater than 0 for item {item.sku}")
+
+	def validate_for_delivery_start(self):
+		"""
+		Additional validation when workflow state is 'Delivery Started'
+		"""
+		# Additional checks for delivery start if needed
+		pass
+
+	def validate_vehicle_fields(self):
+		"""
+		Validate that vehicle-related fields are mandatory when submitting
+		"""
+		# Skip validation for adjusted indents as they inherit vehicle details from original indent
+		if self.is_adjusted_indent:
+			return
+		
+		# Check if vehicle is selected
+		if not self.vehicle:
+			frappe.throw(
+				"Vehicle is mandatory when submitting an indent. Please select a vehicle before submitting.",
+				title="Vehicle Required"
+			)
+		
+		# Check if vehicle license plate is provided
+		if not self.vehicle_license_plate:
+			frappe.throw(
+				"Vehicle License Plate is mandatory when submitting an indent. Please enter the license plate number.",
+				title="Vehicle License Plate Required"
+			)
+		
+		# Check if driver is assigned
+		if not self.driver:
+			frappe.throw(
+				"Driver is mandatory when submitting an indent. Please assign a driver before submitting.",
+				title="Driver Required"
+			)
+		
+		# Additional validation: Check if driver is active
+		if self.driver:
+			driver_status = frappe.get_value("Employee", self.driver, "status")
+			if driver_status != "Active":
+				frappe.throw(
+					f"Driver {self.driver} is not active (Status: {driver_status}). Please assign an active driver.",
+					title="Inactive Driver"
+				)
+		
+		# Additional validation: Check if vehicle is active
+		if self.vehicle:
+			vehicle_status = frappe.get_value("Vehicle", self.vehicle, "status")
+			if vehicle_status != "Active":
+				frappe.throw(
+					f"Vehicle {self.vehicle} is not active (Status: {vehicle_status}). Please select an active vehicle.",
+					title="Inactive Vehicle"
+				)
+
+	def before_save(self):
+		"""
+		Runs before document is saved - prevent automatic workflow transitions
+		"""
+		# Skip validation for adjusted indents
+		if self.is_adjusted_indent:
+			return
+		
+		# If this is a new document or being saved for the first time
+		if not self.name or frappe.db.exists("SF Indent Master", self.name) == False:
+			# For new documents, always start in Draft state
+			self.workflow_state = "Draft"
+			frappe.msgprint(
+				"Document saved in Draft state. Fill in vehicle details and use 'Send To Plant' action when ready.",
+				indicator="blue",
+				alert=True
+			)
+		
+		# For existing documents in Draft state, check if trying to transition to Sent To Plant
+		elif self.workflow_state == "Draft":
+			# Check if vehicle fields are missing and prevent transition to "Sent To Plant"
+			if not self.vehicle or not self.vehicle_license_plate or not self.driver:
+				frappe.msgprint(
+					"Vehicle details are missing. Please fill in Vehicle, Vehicle License Plate, and Driver before using 'Send To Plant' action.",
+					indicator="yellow",
+					alert=True
+				)
+			else:
+				# Vehicle details are complete, can proceed to "Sent To Plant" via workflow action
+				frappe.msgprint(
+					"Vehicle details are complete. You can now use 'Send To Plant' action.",
+					indicator="green",
+					alert=True
+				)
 
 	# def create_draft_sales_order(self):
 	# 	"""Create a draft Sales Order from the SFIndentMaster"""
