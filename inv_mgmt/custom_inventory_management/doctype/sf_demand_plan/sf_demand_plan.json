@@ -1,6 +1,7 @@
 {
  "actions": [],
  "allow_rename": 1,
+ "autoname": "format:SF-DS-{channel}-{######}",
  "creation": "2025-07-31 14:55:32.102827",
  "doctype": "DocType",
  "engine": "InnoDB",
@@ -31,13 +32,15 @@
   {
    "fieldname": "planning_week",
    "fieldtype": "Date",
-   "label": "Plan Start Date"
+   "label": "Plan Start Date",
+   "reqd": 1
   },
   {
    "fieldname": "branch",
    "fieldtype": "Link",
    "label": "Branch",
-   "options": "Branch"
+   "options": "Branch",
+   "reqd": 1
   },
   {
    "fieldname": "roster_table",
@@ -53,10 +56,10 @@
   },
   {
    "fieldname": "channel",
-   "fieldtype": "Select",
+   "fieldtype": "Link",
    "in_list_view": 1,
    "label": "Channel",
-   "options": "\nRetail & Distributors\nCorporate\nB2C\nAgents\nPromotions\nFM Buffer\nMM Buffer\nSupply Chain\nPlant\nGeneric",
+   "options": "SF Sales Channel",
    "reqd": 1
   }
  ],
@@ -64,10 +67,11 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-08-05 17:06:27.239571",
+ "modified": "2025-08-13 17:20:14.519974",
  "modified_by": "Administrator",
  "module": "custom_inventory_management",
  "name": "SF Demand Plan",
+ "naming_rule": "Expression",
  "owner": "Administrator",
  "permissions": [
   {

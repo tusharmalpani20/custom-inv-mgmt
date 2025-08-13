@@ -255,12 +255,14 @@ class DeliveryIssueNote(Document):
     def create_stock_entry(self):
         """
         Creates separate stock entries on submission to handle:
-        1. Moving missing items to 'Missed Items - SFPL' warehouse
-        2. Moving damaged items to 'Damaged Items - SFPL' warehouse
+        1. Moving missing items to branch-specific 'Missing SKU' warehouse
+        2. Moving damaged items to branch-specific 'Damaged SKU' warehouse
         
         The source warehouse is determined by:
         - For internal customers: uses set_target_warehouse from delivery note
         - For non-internal customers: uses set_warehouse from delivery note
+        
+        The target warehouses are determined by the branch of the source warehouse.
         """
         if not (any(item.missing_qty for item in self.items) or 
                 any(item.damaged_qty for item in self.items)):
@@ -274,10 +276,37 @@ class DeliveryIssueNote(Document):
                           if delivery_note.is_internal_customer 
                           else delivery_note.set_warehouse)
 
+        # Get branch from source warehouse
+        warehouse_branch = frappe.get_cached_value("Warehouse", source_warehouse, "custom_branch")
+        if not warehouse_branch:
+            frappe.throw(_("Source warehouse '{0}' does not have a branch assigned. Please assign a branch to the warehouse before submitting this document.").format(source_warehouse))
+
         # Get default company from Global Defaults
         default_company = frappe.get_cached_value('Global Defaults', None, 'default_company')
         if not default_company:
             frappe.throw(_("Please set default company in Global Defaults"))
+
+        # Find branch-specific warehouses using proper filters
+        missing_warehouse = frappe.db.get_value("Warehouse", {
+            "custom_branch": warehouse_branch,
+            "parent_warehouse": "Missed SKU - SFPL",
+            "is_rejected_warehouse": 1,
+            "warehouse_name": ["like", f"%Missing SKU%"]
+        }, "name")
+        
+        damaged_warehouse = frappe.db.get_value("Warehouse", {
+            "custom_branch": warehouse_branch,
+            "parent_warehouse": "Damaged SKU - SFPL",
+            "is_rejected_warehouse": 1,
+            "warehouse_name": ["like", f"%Damaged SKU%"]
+        }, "name")
+
+        # Verify that branch-specific warehouses exist
+        if not missing_warehouse:
+            frappe.throw(_("Missing SKU warehouse does not exist for branch '{0}'. Please ensure the branch has been properly set up with a Missing SKU warehouse under 'Missed SKU - SFPL'.").format(warehouse_branch))
+        
+        if not damaged_warehouse:
+            frappe.throw(_("Damaged SKU warehouse does not exist for branch '{0}'. Please ensure the branch has been properly set up with a Damaged SKU warehouse under 'Damaged SKU - SFPL'.").format(warehouse_branch))
 
         # Create stock entry for missing items
         missing_items = [item for item in self.items if item.missing_qty]
@@ -286,7 +315,7 @@ class DeliveryIssueNote(Document):
             missing_stock_entry.stock_entry_type = "Material Transfer"
             missing_stock_entry.company = default_company
             missing_stock_entry.from_warehouse = source_warehouse
-            missing_stock_entry.to_warehouse = "Missed Items - SFPL"
+            missing_stock_entry.to_warehouse = missing_warehouse
 
             for item in missing_items:
                 missing_stock_entry.append("items", {
@@ -301,7 +330,7 @@ class DeliveryIssueNote(Document):
                 "stock_entry": missing_stock_entry.name
             })
             
-            frappe.msgprint(_("Stock Entry {0} created for missing items").format(missing_stock_entry.name))
+            frappe.msgprint(_("Stock Entry {0} created for missing items to {1}").format(missing_stock_entry.name, missing_warehouse))
 
         # Create stock entry for damaged items
         damaged_items = [item for item in self.items if item.damaged_qty]
@@ -310,7 +339,7 @@ class DeliveryIssueNote(Document):
             damaged_stock_entry.stock_entry_type = "Material Transfer"
             damaged_stock_entry.company = default_company
             damaged_stock_entry.from_warehouse = source_warehouse
-            damaged_stock_entry.to_warehouse = "Damaged Items - SFPL"
+            damaged_stock_entry.to_warehouse = damaged_warehouse
 
             for item in damaged_items:
                 damaged_stock_entry.append("items", {
@@ -326,7 +355,7 @@ class DeliveryIssueNote(Document):
                 "stock_entry": damaged_stock_entry.name
             })
             
-            frappe.msgprint(_("Stock Entry {0} created for damaged items").format(damaged_stock_entry.name))
+            frappe.msgprint(_("Stock Entry {0} created for damaged items to {1}").format(damaged_stock_entry.name, damaged_warehouse))
 
     def on_cancel(self):
         """

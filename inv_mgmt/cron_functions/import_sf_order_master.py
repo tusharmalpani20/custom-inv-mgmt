@@ -62,7 +62,7 @@ def import_d2c_orders():
         }
         
         request_data = {
-            "delivery_date": "2025-08-06",
+            "delivery_date": "2025-08-10",
             "regenerate": False
         }
         
@@ -199,7 +199,7 @@ def import_b2b_orders():
         }
         
         request_data = {
-            "delivery_date": "2025-08-06",
+            "delivery_date": "2025-08-10",
             "regenerate": False
         }
         
@@ -818,6 +818,30 @@ def import_all_orders():
         "d2c_result": d2c_result,
         "b2b_result": b2b_result
     }
+
+
+def enqueue_import_all_orders():
+    """
+    Wrapper function to enqueue the import_all_orders job with extended timeout
+    This ensures the job runs in the long queue with sufficient timeout for 10-15 minute execution
+    """
+    try:
+        # Enqueue the job with long queue and 20 minutes timeout (1200 seconds)
+        # The long queue has a default timeout of 1500 seconds (25 minutes)
+        frappe.enqueue(
+            method="inv_mgmt.cron_functions.import_sf_order_master.import_all_orders",
+            queue="long",
+            timeout=1200,  # 20 minutes timeout
+            job_name="import_all_orders",
+            track_job=True,
+            is_async=True
+        )
+        print("Import all orders job has been enqueued successfully")
+        return {"status": "success", "message": "Job enqueued successfully"}
+    except Exception as e:
+        print(f"Error enqueueing import_all_orders job: {str(e)}")
+        return {"status": "error", "message": str(e)}
+
 
 # this function is used to import SF Order Master records from SF API
 # we run this function after we have imported SF Product Master records

@@ -131,7 +131,7 @@ app_license = "mit"
 
 override_doctype_class = {
 #	"ToDo": "custom_app.overrides.CustomToDo"
-	"Branch": "custom_inventory_management.overrides.doctypes.branch.CustomBranch"
+	"Branch": "inv_mgmt.overrides.doctypes.branch.CustomBranch"
 }
 
 # Document Events
@@ -149,7 +149,49 @@ override_doctype_class = {
 # Scheduled Tasks
 # ---------------
 
-# scheduler_events = {
+scheduler_events = {
+    # "cron": {
+    #     "0 21 * * *" : [
+    #         #Here we will run the function to import the SF Product Master Records
+    #         "inv_mgmt.cron_functions.import_sf_product_master.import_sf_product_master"
+    #     ],
+    #     "0 23 * * *" : [
+    #         # Alternative: Use wrapper function with extended timeout for 23:00 timing
+    #         "inv_mgmt.cron_functions.import_sf_order_master.enqueue_import_all_orders"
+    #     ],
+    #     "20 23 * * *" :[
+    #         "custom_app_api.cron_functions.update_delivery_count_for_each_route.update_delivery_count_for_routes_v2"
+    #     ],
+    #     "0 9 * * *": [
+    #         "custom_app_api.cron_functions.check_attendance_index_for_route_tracking.check_attendance_index_for_route_tracking"
+    #     ],
+    #     "30 9 * * *": [
+    #         "custom_app_api.cron_functions.attendance_cron.auto_mark_employee_absent_and_submit_all_todays_attendance"
+    #     ],
+    #     "45 9 * * *": [
+    #         "custom_app_api.cron_functions.additional_salary_extra_km.calculate_extra_km_salary"
+    #     ],
+    #     "0 10 * * *": [
+    #         #"custom_app_api.cron_functions.email_report.send_point_wise_attendance_report"
+
+    #         "custom_app_api.cron_functions.additional_salary_route_bonus.generate_route_payout"
+    #     ],
+    #     "0 22 * * *": [
+    #         "custom_app_api.cron_functions.create_employee_referral_and_additional_salary.process_referral_bonuses"
+    #     ],
+    #     "30 22 * * *": [
+    #         "custom_app_api.cron_functions.auto_assign_salary_structure_for_promotions.auto_assign_salary_structure"
+    #     ],
+    #     "0 23 * * *": [  # Runs at 11:00 PM (23:00) every day
+    #         "custom_app_api.cron_functions.salary_slip_cron.generate_salary_slips_for_active_employees"
+    #     ],
+    #     "0 0 * * *": [
+    #         "custom_app_api.cron_functions.employee.check_notice_period_completion"
+    #     ],
+    #     "0 11 L * *": [
+    #         # "custom_app_api.cron_functions.additional_salary_packet_bonus.calculate_packet_bonus"
+    #     ],
+    # },
 # 	"all": [
 # 		"inv_mgmt.tasks.all"
 # 	],
@@ -165,7 +207,7 @@ override_doctype_class = {
 # 	"monthly": [
 # 		"inv_mgmt.tasks.monthly"
 # 	],
-# }
+}
 
 # Testing
 # -------

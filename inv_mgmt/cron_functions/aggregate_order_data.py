@@ -2224,18 +2224,17 @@ def daily_order_aggregation():
     try:
         info_print("Starting daily order aggregation job")
         
-        # # Get all active branches
-        # branches = frappe.db.sql("""
-        #     SELECT name
-        #     FROM `tabBranch`
-        #     WHERE disabled = 0
-        # """, as_dict=True)
+        # Get all active branches
+        branches = frappe.db.sql("""
+            SELECT name
+            FROM `tabBranch`
+        """, as_dict=True)
         
-        # branch_names = [branch.name for branch in branches]
+        branch_names = [branch.name for branch in branches]
         # yesterday = add_days(nowdate(), -1)
 
-        branch_names = ["Hyderabad"]
-        yesterday = "2025-08-06"
+        # branch_names = ["Hyderabad"]
+        yesterday = "2025-08-10"
         
         info_print(f"Processing branches: {branch_names}, date: {yesterday}")
         
@@ -2243,11 +2242,17 @@ def daily_order_aggregation():
         
         if result["status"] == "success":
             info_print(f"Daily order aggregation completed: {result['message']}")
+            return result
         else:
             error_print(f"Daily order aggregation failed: {result['message']}")
+            return result
             
     except Exception as e:
         error_print(f"Error in daily_order_aggregation: {str(e)}")
+        return {
+            "status": "error",
+            "message": f"Error in daily_order_aggregation: {str(e)}"
+        }
 
 
 # bench execute "inv_mgmt.cron_functions.aggregate_order_data.daily_order_aggregation"
