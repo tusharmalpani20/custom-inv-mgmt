@@ -1,6 +1,11 @@
 	// Copyright (c) 2025, Hopnet Communications LLP and contributors
 	// For license information, please see license.txt
 
+	// Test to verify this file is being loaded
+	console.log("SF Indent Master JavaScript file loaded successfully");
+	
+	// List view configuration moved to sf_indent_list.js
+
 	/**
 	 * SF Indent Master Form Scripts
 	 * 
@@ -8,12 +13,16 @@
 	 * 1. Automatic crate calculations when items are added or quantities change
 	 * 2. Handling of difference and actual quantity calculations
 	 * 3. Real-time updates of child table fields
+	 * 4. Warehouse filtering to show only Plant warehouses
+	 * 5. Item filtering to exclude template items (has_variants = 1)
 	 * 
 	 * Implementation Details:
 	 * - Uses frappe.model.set_value for child table operations (not frm.set_value)
 	 * - Calculates crates/loose based on UOM conversion from server
 	 * - Handles difference as shortfall in production
 	 * - Updates actual quantity automatically based on difference
+	 * - Filters warehouses by custom_warehouse_category = "Plant"
+	 * - Filters items to exclude those with has_variants = 1
 	 * 
 	 * Business Logic:
 	 * - When an item is selected:
@@ -37,8 +46,53 @@
 
 	frappe.ui.form.on("SF Indent Master", {
 		refresh(frm) {
+			console.log("SF Indent Master form refresh triggered");
 			frm.set_value("company", frappe.get_doc("Company", frappe.get_doc("Company").get_default_company()).name);
+			
+			// Set warehouse filter to show only Plant warehouses
+			frm.set_query("for", function() {
+				console.log("Setting warehouse filter for 'for' field");
+				return {
+					filters: {
+						"custom_warehouse_category": "Plant"
+					}
+				};
+			});
+			
+			// Set item filter to exclude template items (has_variants = 1) for child table
+			frm.set_query("sku", "items", function() {
+				console.log("Setting item filter for 'sku' field in items table");
+				return {
+					filters: [
+						["Item", "has_variants", "=", 0]
+					]
+				};
+			});
 		},
+		
+		// Add onload event to ensure filters are set early
+		onload: function(frm) {
+			console.log("SF Indent Master form onload triggered");
+			// Set warehouse filter to show only Plant warehouses
+			frm.set_query("for", function() {
+				console.log("Setting warehouse filter for 'for' field in onload");
+				return {
+					filters: {
+						"custom_warehouse_category": "Plant"
+					}
+				};
+			});
+			
+			// Set item filter to exclude template items (has_variants = 1) for child table
+			frm.set_query("sku", "items", function() {
+				console.log("Setting item filter for 'sku' field in items table in onload");
+				return {
+					filters: [
+						["Item", "has_variants", "=", 0]
+					]
+				};
+			});
+		}
 	});
 
 	frappe.ui.form.on("SF Indent Item", {

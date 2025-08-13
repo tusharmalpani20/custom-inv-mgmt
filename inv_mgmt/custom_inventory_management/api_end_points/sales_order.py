@@ -75,6 +75,11 @@ def get_driver_delivery_routes_with_sales_orders(override_date: str = None) -> D
     Required header: Auth-Token
     Returns:
         Dict containing delivery route info with customers, warehouses and sales orders
+        
+    Note: 
+        - Delivery notes are included for each sales order (without items) to show delivery status
+        - Business rule: Driver creates only one delivery note per sales order
+        - Delivery note information includes: name, posting date/time, status, driver, vehicle, quantities, etc.
     """
     try:
         info_print("Starting get_driver_delivery_routes_with_sales_orders")
@@ -462,7 +467,7 @@ def process_delivery_route_with_sales_orders(route_name: str, effective_date: st
         route_doc = frappe.get_doc("SF Delivery Route Master", route_name)
         
         # Get start point warehouse details
-        start_point_warehouse = get_warehouse_details_with_sales_orders(route_doc.start_point, effective_date)
+        start_point_warehouse = get_warehouse_details_with_sales_orders(route_doc.start_point, effective_date, employee_id)
         
         # Process delivery points (customers and warehouses)
         delivery_points = []
@@ -471,12 +476,12 @@ def process_delivery_route_with_sales_orders(route_name: str, effective_date: st
             
             if point.drop_type == "Customer":
                 # Handle customer delivery point
-                customer_data = get_customer_details_with_sales_orders_from_delivery_point(point, effective_date)
+                customer_data = get_customer_details_with_sales_orders_from_delivery_point(point, effective_date, employee_id)
                 if customer_data:
                     delivery_points.append(customer_data)
             elif point.drop_type == "Warehouse":
                 # Handle warehouse delivery point
-                warehouse_data = get_warehouse_details_with_sales_orders_from_delivery_point(point, effective_date)
+                warehouse_data = get_warehouse_details_with_sales_orders_from_delivery_point(point, effective_date, employee_id)
                 if warehouse_data:
                     delivery_points.append(warehouse_data)
             else:
@@ -506,7 +511,7 @@ def process_delivery_route_with_sales_orders(route_name: str, effective_date: st
         return None
 
 
-def get_warehouse_details_with_sales_orders(warehouse_name: str, effective_date: str) -> Dict:
+def get_warehouse_details_with_sales_orders(warehouse_name: str, effective_date: str, employee_id: str = None) -> Dict:
     """
     Get warehouse details along with sales orders for internal customer
     Note: Skips sales orders for Plant warehouses since they don't have customers
@@ -514,6 +519,7 @@ def get_warehouse_details_with_sales_orders(warehouse_name: str, effective_date:
     Args:
         warehouse_name: Warehouse name
         effective_date: Date in YYYY-MM-DD format
+        employee_id: Optional employee ID to get delivery notes
     
     Returns:
         Dict containing warehouse details and sales orders (if applicable)
@@ -549,7 +555,7 @@ def get_warehouse_details_with_sales_orders(warehouse_name: str, effective_date:
         else:
             # Get internal customer and fetch sales orders
             internal_customer = get_internal_customer()
-            sales_orders = get_sales_orders_for_warehouse(warehouse_name, internal_customer, effective_date)
+            sales_orders = get_sales_orders_for_warehouse(warehouse_name, internal_customer, effective_date, employee_id)
         
         warehouse_data = {
             "name": warehouse_doc.name,
@@ -577,13 +583,14 @@ def get_warehouse_details_with_sales_orders(warehouse_name: str, effective_date:
         }
 
 
-def get_customer_details_with_sales_orders_from_delivery_point(delivery_point: object, effective_date: str) -> Optional[Dict]:
+def get_customer_details_with_sales_orders_from_delivery_point(delivery_point: object, effective_date: str, employee_id: str = None) -> Optional[Dict]:
     """
     Get customer details along with sales orders from delivery point
     
     Args:
         delivery_point: SF Delivery Point object from route
         effective_date: Date in YYYY-MM-DD format
+        employee_id: Optional employee ID to get delivery notes
     
     Returns:
         Dict containing customer details and sales orders
@@ -627,7 +634,7 @@ def get_customer_details_with_sales_orders_from_delivery_point(delivery_point: o
                 shipping_address = None
         
         # Get sales orders for this customer
-        sales_orders = get_sales_orders_for_customer(delivery_point.drop_point, effective_date)
+        sales_orders = get_sales_orders_for_customer(delivery_point.drop_point, effective_date, employee_id)
         
         customer_data = {
             "entity_type": "Customer",
@@ -649,13 +656,14 @@ def get_customer_details_with_sales_orders_from_delivery_point(delivery_point: o
         return None
 
 
-def get_warehouse_details_with_sales_orders_from_delivery_point(delivery_point: object, effective_date: str) -> Optional[Dict]:
+def get_warehouse_details_with_sales_orders_from_delivery_point(delivery_point: object, effective_date: str, employee_id: str = None) -> Optional[Dict]:
     """
     Get warehouse details along with sales orders from delivery point
     
     Args:
         delivery_point: SF Delivery Point object from route
         effective_date: Date in YYYY-MM-DD format
+        employee_id: Optional employee ID to get delivery notes
     
     Returns:
         Dict containing warehouse details and sales orders
@@ -673,13 +681,39 @@ def get_warehouse_details_with_sales_orders_from_delivery_point(delivery_point: 
             error_print(f"Warehouse {delivery_point.drop_point} does not exist in system")
             return None
         
-        # Get warehouse details using existing function
-        warehouse_data = get_warehouse_details_with_sales_orders(delivery_point.drop_point, effective_date)
+        # Get warehouse document
+        warehouse_doc = frappe.get_doc("Warehouse", delivery_point.drop_point)
         
-        # Add entity type to distinguish from customers
-        warehouse_data["entity_type"] = "Warehouse"
+        # Get warehouse address
+        warehouse_address = None
+        if hasattr(warehouse_doc, 'address_line_1') and warehouse_doc.address_line_1:
+            warehouse_address = {
+                "address_line_1": warehouse_doc.address_line_1,
+                "address_line_2": warehouse_doc.address_line_2,
+                "city": warehouse_doc.city,
+                "state": warehouse_doc.state,
+                "pincode": warehouse_doc.pin,
+                "latitude": getattr(warehouse_doc, 'custom_latitude', None),
+                "longitude": getattr(warehouse_doc, 'custom_longitude', None)
+            }
         
-        debug_print(f"Got warehouse details for delivery point {delivery_point.drop_point}")
+        # Get sales orders for this warehouse
+        sales_orders = get_sales_orders_for_warehouse(delivery_point.drop_point, get_internal_customer(), effective_date, employee_id)
+        
+        warehouse_data = {
+            "entity_type": "Warehouse",
+            "name": warehouse_doc.name,
+            "display_name": warehouse_doc.warehouse_name,
+            "type": getattr(warehouse_doc, 'warehouse_type', None),
+            "category": getattr(warehouse_doc, 'custom_warehouse_category', None),
+            "branch": getattr(warehouse_doc, 'custom_branch', None),
+            "address": warehouse_address,
+            "sales_orders": sales_orders,
+            "total_sales_orders": len(sales_orders) if sales_orders else 0,
+            "is_plant": getattr(warehouse_doc, 'custom_warehouse_category', None) == 'Plant'
+        }
+        
+        debug_print(f"Got warehouse details for delivery point {delivery_point.drop_point} with {len(sales_orders or [])} sales orders")
         return warehouse_data
         
     except Exception as e:
@@ -687,13 +721,14 @@ def get_warehouse_details_with_sales_orders_from_delivery_point(delivery_point: 
         return None
 
 
-def get_customer_details_with_sales_orders(delivery_point: object, effective_date: str) -> Optional[Dict]:
+def get_customer_details_with_sales_orders(delivery_point: object, effective_date: str, employee_id: str = None) -> Optional[Dict]:
     """
     Get customer details along with sales orders (Legacy function for backward compatibility)
     
     Args:
         delivery_point: SF Delivery Point object from route
         effective_date: Date in YYYY-MM-DD format
+        employee_id: Optional employee ID to get delivery notes
     
     Returns:
         Dict containing customer details and sales orders
@@ -736,7 +771,7 @@ def get_customer_details_with_sales_orders(delivery_point: object, effective_dat
                 address_details = None
         
         # Get sales orders for this customer
-        sales_orders = get_sales_orders_for_customer(delivery_point.customer, effective_date)
+        sales_orders = get_sales_orders_for_customer(delivery_point.customer, effective_date, employee_id)
         
         customer_data = {
             "entity_type": "Customer",
@@ -759,7 +794,7 @@ def get_customer_details_with_sales_orders(delivery_point: object, effective_dat
         return None
 
 
-def get_sales_orders_for_warehouse(warehouse_name: str, internal_customer: str, effective_date: str) -> List[Dict]:
+def get_sales_orders_for_warehouse(warehouse_name: str, internal_customer: str, effective_date: str, employee_id: str = None) -> List[Dict]:
     """
     Get sales orders for warehouse using SF Facility Master's shipping address
     
@@ -767,6 +802,7 @@ def get_sales_orders_for_warehouse(warehouse_name: str, internal_customer: str, 
         warehouse_name: Warehouse name
         internal_customer: Internal customer name
         effective_date: Date in YYYY-MM-DD format
+        employee_id: Optional employee ID to get delivery notes
     
     Returns:
         List of sales order dictionaries
@@ -812,8 +848,9 @@ def get_sales_orders_for_warehouse(warehouse_name: str, internal_customer: str, 
         
         debug_print(f"Found {len(sales_orders)} sales orders for warehouse {warehouse_name}")
         
-        # Get items for each sales order
+        # Get items and delivery notes for each sales order
         for order in sales_orders:
+            # Get items
             order_items = frappe.db.sql("""
                 SELECT item_code, item_name, qty, delivered_qty, billed_amt,
                        rate, amount, warehouse
@@ -824,6 +861,10 @@ def get_sales_orders_for_warehouse(warehouse_name: str, internal_customer: str, 
             
             order["items"] = order_items
             order["total_items"] = len(order_items)
+            
+            # Get delivery note (without items)
+            delivery_note = get_delivery_notes_for_sales_order(order.name, employee_id)
+            order["delivery_note"] = delivery_note
         
         return sales_orders
         
@@ -832,13 +873,14 @@ def get_sales_orders_for_warehouse(warehouse_name: str, internal_customer: str, 
         return []
 
 
-def get_sales_orders_for_customer(customer_name: str, effective_date: str) -> List[Dict]:
+def get_sales_orders_for_customer(customer_name: str, effective_date: str, employee_id: str = None) -> List[Dict]:
     """
     Get sales orders for customer
     
     Args:
         customer_name: Customer name
         effective_date: Date in YYYY-MM-DD format
+        employee_id: Optional employee ID to get delivery notes
     
     Returns:
         List of sales order dictionaries
@@ -863,8 +905,9 @@ def get_sales_orders_for_customer(customer_name: str, effective_date: str) -> Li
         
         debug_print(f"Found {len(sales_orders)} sales orders for customer {customer_name}")
         
-        # Get items for each sales order
+        # Get items and delivery notes for each sales order
         for order in sales_orders:
+            # Get items
             order_items = frappe.db.sql("""
                 SELECT item_code, item_name, qty, delivered_qty, billed_amt,
                        rate, amount, warehouse
@@ -875,12 +918,106 @@ def get_sales_orders_for_customer(customer_name: str, effective_date: str) -> Li
             
             order["items"] = order_items
             order["total_items"] = len(order_items)
+            
+            # Get delivery note (without items)
+            delivery_note = get_delivery_notes_for_sales_order(order.name, employee_id)
+            order["delivery_note"] = delivery_note
         
         return sales_orders
         
     except Exception as e:
         error_print(f"Error getting sales orders for customer {customer_name}: {str(e)}")
         return []
+
+
+def get_delivery_notes_for_sales_order(sales_order_id: str, employee_record_id: str = None) -> Optional[Dict]:
+    """
+    Get delivery note information for a sales order (without items)
+
+    Args:
+        sales_order_id: Sales Order ID
+        employee_record_id: Optional employee record ID to filter by driver
+
+    Returns:
+        Dict containing delivery note details or None if not found
+
+    Note:
+        Business rule: Driver creates only one delivery note per sales order.
+        This function returns the first (most recent) delivery note found.
+        If employee_record_id is provided, it filters by the specific driver.
+    """
+    try:
+        # First, get delivery note IDs from Delivery Note Item where against_sales_order matches
+        delivery_note_ids = frappe.db.sql("""
+            SELECT DISTINCT parent 
+            FROM `tabDelivery Note Item` 
+            WHERE against_sales_order = %s
+        """, sales_order_id, as_list=True)
+        
+        if not delivery_note_ids:
+            return None
+        
+        # Extract the delivery note names from the result
+        delivery_note_names = [item[0] for item in delivery_note_ids]
+        
+        # Build the filter for delivery notes
+        filters = {
+            "name": ["in", delivery_note_names],
+            "docstatus": ["!=", 2]  # Exclude cancelled documents
+        }
+        
+        # Add driver filter if provided
+        if employee_record_id:
+            driver_record = get_driver_record_for_employee(employee_record_id)
+            filters["driver"] = driver_record
+
+        
+        # Get delivery notes for this sales order
+        delivery_notes = frappe.get_all(
+            "Delivery Note",
+            filters=filters,
+            fields=[
+                "name", "posting_date", "posting_time", "status", "driver", 
+                "vehicle_no", "total_qty", "grand_total"
+            ],
+            order_by="posting_date desc, posting_time desc"
+        )
+
+        
+        if not delivery_notes:
+            return None
+        
+        # Return the first (most recent) delivery note
+        # Business rule: Driver creates only one DN per SO
+        delivery_note = delivery_notes[0]
+        
+        # # Get additional driver and vehicle details if available
+        # if delivery_note.get("driver"):
+        #     driver_details = frappe.db.get_value(
+        #         "Driver", 
+        #         delivery_note.driver, 
+        #         ["driver_name", "cell_number", "license_number"], 
+        #         as_dict=True
+        #     )
+        #     if driver_details:
+        #         delivery_note.update(driver_details)
+        
+        # if delivery_note.get("vehicle"):
+        #     vehicle_details = frappe.db.get_value(
+        #         "Vehicle", 
+        #         delivery_note.vehicle, 
+        #         ["license_plate", "make", "model"], 
+        #         as_dict=True
+        #     )
+        #     if vehicle_details:
+        #         delivery_note.update(vehicle_details)
+        
+        return delivery_note
+        
+    except Exception as e:
+        error_print(f"Error getting delivery notes for sales order {sales_order_id}: {str(e)}")
+        frappe.log_error(f"Error getting delivery notes for sales order {sales_order_id}: {str(e)}")
+        return None
 
 
 def get_crate_details_for_item(item_code: str, quantity: float) -> Dict[str, Any]:
@@ -1131,6 +1268,197 @@ def get_sales_order_details_for_delivery(sales_order_id: str) -> Dict[str, Any]:
             "success": False,
             "status": "error",
             "message": "Failed to fetch sales order details for delivery",
+            "code": "SYSTEM_ERROR",
+            "error": str(e),
+            "http_status_code": 500
+        }
+
+
+@frappe.whitelist(allow_guest=True)
+def get_aggregated_sales_order_items_for_delivery(sales_order_ids: str) -> Dict[str, Any]:
+    """
+    Get sales order details and delivery items for multiple sales order IDs
+    
+    Args:
+        sales_order_ids: Comma-separated string of Sales Order IDs/names
+    
+    Required header: Auth-Token
+    Returns:
+        Dict containing aggregated sales order details and delivery items for all requested orders
+    """
+    try:
+        info_print(f"Starting get_aggregated_sales_order_items_for_delivery for sales orders: {sales_order_ids}")
+        
+        # Verify token and authenticate
+        is_valid, result = verify_dp_token(frappe.request.headers)
+        if not is_valid:
+            error_print("Token verification failed")
+            frappe.local.response['http_status_code'] = 401
+            return result
+        
+        employee_id = result["employee"]
+        info_print(f"Authenticated employee: {employee_id}")
+        
+        # Parse sales order IDs from comma-separated string
+        if not sales_order_ids:
+            error_print("No sales order IDs provided")
+            frappe.local.response['http_status_code'] = 400
+            return {
+                "success": False,
+                "status": "error",
+                "message": "No sales order IDs provided",
+                "code": "NO_SALES_ORDER_IDS",
+                "http_status_code": 400
+            }
+        
+        # Split and clean the sales order IDs
+        sales_order_id_list = [so_id.strip() for so_id in sales_order_ids.split(',') if so_id.strip()]
+        
+        if not sales_order_id_list:
+            error_print("No valid sales order IDs found after parsing")
+            frappe.local.response['http_status_code'] = 400
+            return {
+                "success": False,
+                "status": "error",
+                "message": "No valid sales order IDs found",
+                "code": "NO_VALID_SALES_ORDER_IDS",
+                "http_status_code": 400
+            }
+        
+        info_print(f"Processing {len(sales_order_id_list)} sales orders: {sales_order_id_list}")
+        
+        # Process each sales order
+        successful_sales_order_ids = []
+        aggregated_items = {}  # Use dict to track unique items by item_code
+        not_found_orders = []
+        not_submitted_orders = []
+        error_orders = []
+        
+        for sales_order_id in sales_order_id_list:
+            try:
+                # Check if sales order exists
+                if not frappe.db.exists("Sales Order", sales_order_id):
+                    not_found_orders.append(sales_order_id)
+                    continue
+                
+                # Get sales order document
+                sales_order_doc = frappe.get_doc("Sales Order", sales_order_id)
+                
+                # Check if sales order is submitted
+                if sales_order_doc.docstatus != 1:
+                    not_submitted_orders.append(sales_order_id)
+                    continue
+                
+                # Add to successful sales order IDs
+                successful_sales_order_ids.append(sales_order_id)
+                
+                # Process delivery items (items that need to be delivered)
+                for item in sales_order_doc.items:
+                    # Calculate remaining delivery quantity
+                    remaining_qty = item.qty - item.delivered_qty
+                    
+                    if remaining_qty > 0:
+                        # Get crate details for this item
+                        crate_details = get_crate_details_for_item(item.item_code, remaining_qty)
+                        
+                        delivery_item = {
+                            "item_code": item.item_code,
+                            "item_name": item.item_name,
+                            "qty": item.qty,
+                            "delivered_qty": item.delivered_qty,
+                            "remaining_qty": remaining_qty,
+                            "rate": item.rate,
+                            "amount": item.amount,
+                            "warehouse": item.warehouse,
+                            "uom": item.uom,
+                            "description": item.description,
+                            "needs_delivery": True,
+                            # Add crate calculations
+                            "crates": crate_details.get("crates", 0),
+                            "loose": crate_details.get("loose", remaining_qty),
+                            "conversion_factor": crate_details.get("conversion_factor", 0),
+                            "has_crate_conversion": crate_details.get("has_crate_conversion", False),
+                            "crate_message": crate_details.get("message", None)
+                        }
+                        
+                        # Add to aggregated items (if item_code already exists, it will be overwritten)
+                        # This ensures unique items based on item_code
+                        aggregated_items[item.item_code] = delivery_item
+                
+            except Exception as e:
+                error_print(f"Error processing sales order {sales_order_id}: {str(e)}")
+                error_orders.append({
+                    "sales_order_id": sales_order_id,
+                    "error": str(e)
+                })
+        
+        # Convert aggregated items dict to list
+        aggregated_items_list = list(aggregated_items.values())
+        
+        # Prepare response
+        response_data = {
+            "sales_order_ids": successful_sales_order_ids,
+            "items": aggregated_items_list,
+            "summary": {
+                "total_requested": len(sales_order_id_list),
+                "successful": len(successful_sales_order_ids),
+                "not_found": len(not_found_orders),
+                "not_submitted": len(not_submitted_orders),
+                "errors": len(error_orders),
+                "total_unique_items": len(aggregated_items_list)
+            }
+        }
+        
+        # Add error details if any
+        if not_found_orders:
+            response_data["not_found_orders"] = not_found_orders
+        if not_submitted_orders:
+            response_data["not_submitted_orders"] = not_submitted_orders
+        if error_orders:
+            response_data["error_orders"] = error_orders
+        
+        # Determine response status
+        if len(successful_sales_order_ids) == 0:
+            frappe.local.response['http_status_code'] = 404
+            return {
+                "success": False,
+                "status": "error",
+                "message": "No valid sales orders found",
+                "code": "NO_VALID_SALES_ORDERS",
+                "data": response_data,
+                "http_status_code": 404
+            }
+        elif len(successful_sales_order_ids) < len(sales_order_id_list):
+            # Partial success
+            frappe.local.response['http_status_code'] = 207  # Multi-Status
+            return {
+                "success": True,
+                "status": "partial_success",
+                "message": f"Processed {len(successful_sales_order_ids)} out of {len(sales_order_id_list)} sales orders",
+                "code": "PARTIAL_SUCCESS",
+                "data": response_data,
+                "http_status_code": 207
+            }
+        else:
+            # Complete success
+            frappe.local.response['http_status_code'] = 200
+            return {
+                "success": True,
+                "status": "success",
+                "message": f"Successfully processed all {len(successful_sales_order_ids)} sales orders",
+                "code": "SUCCESS",
+                "data": response_data,
+                "http_status_code": 200
+            }
+        
+    except Exception as e:
+        error_print(f"Error in get_multiple_sales_order_details_for_delivery: {str(e)}")
+        frappe.log_error(str(e), "Multiple Sales Order Details for Delivery API Error")
+        frappe.local.response['http_status_code'] = 500
+        return {
+            "success": False,
+            "status": "error",
+            "message": "Failed to fetch multiple sales order details for delivery",
             "code": "SYSTEM_ERROR",
             "error": str(e),
             "http_status_code": 500
