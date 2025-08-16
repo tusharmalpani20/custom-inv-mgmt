@@ -279,7 +279,7 @@ fixtures = [
                 "custom_grade" : ["is", "set"]
             }
         },
-        {
-            "doctype": "Warehouse"
-        }
+        # {
+        #     "doctype": "Warehouse"
+        # }
 ]

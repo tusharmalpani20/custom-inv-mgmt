@@ -7,6 +7,7 @@
  "engine": "InnoDB",
  "field_order": [
   "sku",
+  "sku_name",
   "uom",
   "quantity",
   "crates",
@@ -16,7 +17,7 @@
  ],
  "fields": [
   {
-   "columns": 2,
+   "columns": 1,
    "fieldname": "sku",
    "fieldtype": "Link",
    "in_list_view": 1,
@@ -59,7 +60,7 @@
    "non_negative": 1
   },
   {
-   "columns": 2,
+   "columns": 1,
    "fieldname": "difference",
    "fieldtype": "Float",
    "in_list_view": 1,
@@ -73,13 +74,22 @@
    "in_list_view": 1,
    "label": "Actual",
    "non_negative": 1
+  },
+  {
+   "columns": 2,
+   "fetch_from": "sku.item_name",
+   "fieldname": "sku_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "SKU Name",
+   "reqd": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-06-02 11:52:19.467729",
+ "modified": "2025-08-17 01:11:04.142098",
  "modified_by": "Administrator",
  "module": "custom_inventory_management",
  "name": "SF Indent Item",
