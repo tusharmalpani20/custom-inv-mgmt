@@ -42,30 +42,74 @@ def log_error(error_category: str, error_description: str, processing_stage: str
         additional_detail: Additional details as JSON
     """
     try:
-        error_log = frappe.get_doc({
-            "doctype": "SF Inventory Data Import Error Logs",
-            "error_category": error_category,
-            "error_description": error_description,
-            "processing_stage": processing_stage,
-            "entity_type": entity_type,
-            "external_id": external_id,
-            "reference_doctype": reference_doctype,
-            "internal_reference": internal_reference,
-            "error_severity": error_severity,
-            "additional_detail": json.dumps(additional_detail) if additional_detail else None,
-            "error_date": nowdate(),
-            "source_system": "Scheduled Jobs"
-        })
-        error_log.insert(ignore_permissions=True)
+        # Check if we're currently in a transaction
+        in_transaction = hasattr(frappe.db, 'transaction_writes') and frappe.db.transaction_writes > 0
         
-        # Only commit if we're not in a transaction to avoid implicit commit errors
-        if not hasattr(frappe.db, 'transaction_writes') or frappe.db.transaction_writes == 0:
-            frappe.db.commit()
-            debug_print(f"Error logged: {error_description}")
+        if in_transaction:
+            # If we're in a transaction, defer error logging to avoid implicit commits
+            # Store error details in frappe.local for later logging
+            if not hasattr(frappe.local, 'deferred_error_logs'):
+                frappe.local.deferred_error_logs = []
+            
+            frappe.local.deferred_error_logs.append({
+                "doctype": "SF Inventory Data Import Error Logs",
+                "error_category": error_category,
+                "error_description": error_description,
+                "processing_stage": processing_stage,
+                "entity_type": entity_type,
+                "external_id": external_id,
+                "reference_doctype": reference_doctype,
+                "internal_reference": internal_reference,
+                "error_severity": error_severity,
+                "additional_detail": json.dumps(additional_detail) if additional_detail else None,
+                "error_date": nowdate(),
+                "source_system": "Scheduled Jobs"
+            })
+            debug_print(f"Error deferred for later logging (within transaction): {error_description}")
         else:
-            debug_print(f"Error logged (within transaction, will commit later): {error_description}")
+            # If not in a transaction, log immediately
+            error_log = frappe.get_doc({
+                "doctype": "SF Inventory Data Import Error Logs",
+                "error_category": error_category,
+                "error_description": error_description,
+                "processing_stage": processing_stage,
+                "entity_type": entity_type,
+                "external_id": external_id,
+                "reference_doctype": reference_doctype,
+                "internal_reference": internal_reference,
+                "error_severity": error_severity,
+                "additional_detail": json.dumps(additional_detail) if additional_detail else None,
+                "error_date": nowdate(),
+                "source_system": "Scheduled Jobs"
+            })
+            error_log.insert(ignore_permissions=True)
+            frappe.db.commit()
+            debug_print(f"Error logged immediately: {error_description}")
+            
     except Exception as e:
         error_print(f"Failed to log error: {str(e)}")
+
+
+def flush_deferred_error_logs():
+    """
+    Flush any deferred error logs that were stored during transactions
+    """
+    if hasattr(frappe.local, 'deferred_error_logs') and frappe.local.deferred_error_logs:
+        debug_print(f"Flushing {len(frappe.local.deferred_error_logs)} deferred error logs")
+        
+        try:
+            for error_data in frappe.local.deferred_error_logs:
+                error_log = frappe.get_doc(error_data)
+                error_log.insert(ignore_permissions=True)
+            
+            frappe.db.commit()
+            debug_print(f"Successfully flushed {len(frappe.local.deferred_error_logs)} error logs")
+            
+            # Clear the deferred logs
+            frappe.local.deferred_error_logs = []
+            
+        except Exception as e:
+            error_print(f"Failed to flush deferred error logs: {str(e)}")
 
 
 def aggregate_orders_and_create_sales_orders(branches: List[str], order_date: str) -> Dict[str, Any]:
@@ -171,6 +215,9 @@ def aggregate_orders_and_create_sales_orders(branches: List[str], order_date: st
         # Remove commit - let mark_orders_and_items_as_processed handle its own transaction
         # frappe.db.commit()  # REMOVED
         
+        # Flush any deferred error logs
+        flush_deferred_error_logs()
+        
         return {
             "status": "success",
             "hierarchy": hierarchy,
@@ -202,6 +249,9 @@ def aggregate_orders_and_create_sales_orders(branches: List[str], order_date: st
                 "error": str(e)
             }
         )
+        
+        # Flush any deferred error logs
+        flush_deferred_error_logs()
         
         return {
             "status": "error",
@@ -1180,9 +1230,9 @@ def create_combined_sales_orders(d2c_orders: Dict, b2b_orders: Dict, order_date:
         # frappe.db.rollback()  # REMOVED
         error_print(f"Error in create_combined_sales_orders: {str(e)}")
         log_error(
-            error_category="Sales Order Creation",
+            error_category="Order Processing",
             error_description=f"Failed to create combined sales orders: {str(e)}",
-            processing_stage="Sales Order Creation",
+            processing_stage="Order Aggregation",
             entity_type="Sales Order",
             error_severity="Critical",
             additional_detail={
@@ -1296,7 +1346,7 @@ def create_sales_order_for_distribution_center_with_items(plant_warehouse: str, 
         log_error(
             error_category="Order Processing",
             error_description=f"Failed to create distribution center sales order: {str(e)}",
-            processing_stage="Sales Order Creation",
+            processing_stage="Order Aggregation",
             entity_type="Sales Order",
             reference_doctype="Sales Order",
             error_severity="High",
@@ -1316,8 +1366,14 @@ def create_sales_order_for_dc_direct_with_orders(dc_warehouse: str, customer_ord
     """
     Create sales order for direct DC to client with specific orders
     """
-    # Start transaction for this sales order creation
-    frappe.db.begin()
+    # Check if we're already in a transaction
+    in_transaction = hasattr(frappe.db, 'transaction_writes') and frappe.db.transaction_writes > 0
+    transaction_started = False
+    
+    if not in_transaction:
+        # Start transaction only if not already in one
+        frappe.db.begin()
+        transaction_started = True
     
     try:
         debug_print(f"Creating direct DC to client sales order for {dc_warehouse} with {len(customer_orders)} orders")
@@ -1346,7 +1402,8 @@ def create_sales_order_for_dc_direct_with_orders(dc_warehouse: str, customer_ord
         
         if not aggregated_items:
             debug_print(f"No items to aggregate for DC direct order {dc_warehouse}")
-            frappe.db.rollback()
+            if transaction_started:
+                frappe.db.rollback()
             return None
         
         # Get customer address for shipping
@@ -1384,14 +1441,16 @@ def create_sales_order_for_dc_direct_with_orders(dc_warehouse: str, customer_ord
         
         if not sales_order.items:
             debug_print(f"No items to add to DC direct sales order for {dc_warehouse}")
-            frappe.db.rollback()
+            if transaction_started:
+                frappe.db.rollback()
             return None
             
         sales_order.insert()
         sales_order.submit()
         
-        # Commit the transaction
-        frappe.db.commit()
+        # Commit the transaction only if we started it
+        if transaction_started:
+            frappe.db.commit()
         
         debug_print(f"Successfully created DC direct sales order {sales_order.name}")
         
@@ -1406,9 +1465,25 @@ def create_sales_order_for_dc_direct_with_orders(dc_warehouse: str, customer_ord
         }
         
     except Exception as e:
-        # Rollback on error
-        frappe.db.rollback()
+        # Rollback only if we started the transaction
+        if transaction_started:
+            frappe.db.rollback()
         error_print(f"Error creating DC direct sales order: {str(e)}")
+        log_error(
+            error_category="Order Processing",
+            error_description=f"Failed to create DC direct sales order: {str(e)}",
+            processing_stage="Order Aggregation",
+            entity_type="Sales Order",
+            reference_doctype="Sales Order",
+            error_severity="High",
+            additional_detail={
+                "from_warehouse": dc_warehouse,
+                "to_customer": customer,
+                "order_type": "B2B",
+                "customer": customer,
+                "error": str(e)
+            }
+        )
         return None
 
 
@@ -1417,8 +1492,14 @@ def create_sales_order_for_plant_direct_with_orders(plant_warehouse: str, custom
     """
     Create sales order for direct plant to client with specific orders
     """
-    # Start transaction for this sales order creation
-    frappe.db.begin()
+    # Check if we're already in a transaction
+    in_transaction = hasattr(frappe.db, 'transaction_writes') and frappe.db.transaction_writes > 0
+    transaction_started = False
+    
+    if not in_transaction:
+        # Start transaction only if not already in one
+        frappe.db.begin()
+        transaction_started = True
     
     try:
         debug_print(f"Creating direct plant to client sales order for {plant_warehouse} with {len(customer_orders)} orders")
@@ -1447,7 +1528,8 @@ def create_sales_order_for_plant_direct_with_orders(plant_warehouse: str, custom
         
         if not aggregated_items:
             debug_print(f"No items to aggregate for plant direct order {plant_warehouse}")
-            frappe.db.rollback()
+            if transaction_started:
+                frappe.db.rollback()
             return None
         
         # Get customer address for shipping
@@ -1485,14 +1567,16 @@ def create_sales_order_for_plant_direct_with_orders(plant_warehouse: str, custom
         
         if not sales_order.items:
             debug_print(f"No items to add to plant direct sales order for {plant_warehouse}")
-            frappe.db.rollback()
+            if transaction_started:
+                frappe.db.rollback()
             return None
             
         sales_order.insert()
         sales_order.submit()
         
-        # Commit the transaction
-        frappe.db.commit()
+        # Commit the transaction only if we started it
+        if transaction_started:
+            frappe.db.commit()
         
         debug_print(f"Successfully created plant direct sales order {sales_order.name}")
         
@@ -1507,9 +1591,25 @@ def create_sales_order_for_plant_direct_with_orders(plant_warehouse: str, custom
         }
         
     except Exception as e:
-        # Rollback on error
-        frappe.db.rollback()
+        # Rollback only if we started the transaction
+        if transaction_started:
+            frappe.db.rollback()
         error_print(f"Error creating plant direct sales order: {str(e)}")
+        log_error(
+            error_category="Order Processing",
+            error_description=f"Failed to create plant direct sales order: {str(e)}",
+            processing_stage="Order Aggregation",
+            entity_type="Sales Order",
+            reference_doctype="Sales Order",
+            error_severity="High",
+            additional_detail={
+                "from_warehouse": plant_warehouse,
+                "to_customer": customer,
+                "order_type": "B2B",
+                "customer": customer,
+                "error": str(e)
+            }
+        )
         return None
 
 
@@ -1518,8 +1618,14 @@ def create_sales_order_for_darkstore_to_client_with_orders(darkstore_warehouse: 
     """
     Create sales order for Darkstore to Client with specific orders
     """
-    # Start transaction for this sales order creation
-    frappe.db.begin()
+    # Check if we're already in a transaction
+    in_transaction = hasattr(frappe.db, 'transaction_writes') and frappe.db.transaction_writes > 0
+    transaction_started = False
+    
+    if not in_transaction:
+        # Start transaction only if not already in one
+        frappe.db.begin()
+        transaction_started = True
     
     try:
         debug_print(f"Creating darkstore to client sales order for {darkstore_warehouse} with {len(customer_orders)} orders")
@@ -1548,7 +1654,8 @@ def create_sales_order_for_darkstore_to_client_with_orders(darkstore_warehouse: 
         
         if not aggregated_items:
             debug_print(f"No items to aggregate for darkstore to client order {darkstore_warehouse}")
-            frappe.db.rollback()
+            if transaction_started:
+                frappe.db.rollback()
             return None
         
         # Get customer address for shipping
@@ -1586,14 +1693,16 @@ def create_sales_order_for_darkstore_to_client_with_orders(darkstore_warehouse: 
         
         if not sales_order.items:
             debug_print(f"No items to add to darkstore to client sales order for {darkstore_warehouse}")
-            frappe.db.rollback()
+            if transaction_started:
+                frappe.db.rollback()
             return None
             
         sales_order.insert()
         sales_order.submit()
         
-        # Commit the transaction
-        frappe.db.commit()
+        # Commit the transaction only if we started it
+        if transaction_started:
+            frappe.db.commit()
         
         debug_print(f"Successfully created darkstore to client sales order {sales_order.name}")
         
@@ -1608,13 +1717,14 @@ def create_sales_order_for_darkstore_to_client_with_orders(darkstore_warehouse: 
         }
         
     except Exception as e:
-        # Rollback on error
-        frappe.db.rollback()
+        # Rollback only if we started the transaction
+        if transaction_started:
+            frappe.db.rollback()
         error_print(f"Error creating darkstore to client sales order: {str(e)}")
         log_error(
             error_category="Order Processing",
             error_description=f"Failed to create darkstore to client sales order: {str(e)}",
-            processing_stage="Sales Order Creation",
+            processing_stage="Order Aggregation",
             entity_type="Sales Order",
             reference_doctype="Sales Order",
             error_severity="High",
@@ -1720,8 +1830,14 @@ def create_sales_order_for_darkstore(dc_warehouse: str, darkstore_warehouse: str
     """
     Create sales order for darkstore (from distribution center to darkstore)
     """
-    # Start transaction for this sales order creation
-    frappe.db.begin()
+    # Check if we're already in a transaction
+    in_transaction = hasattr(frappe.db, 'transaction_writes') and frappe.db.transaction_writes > 0
+    transaction_started = False
+    
+    if not in_transaction:
+        # Start transaction only if not already in one
+        frappe.db.begin()
+        transaction_started = True
     
     try:
         debug_print(f"Creating sales order for darkstore {darkstore_warehouse}")
@@ -1754,7 +1870,7 @@ def create_sales_order_for_darkstore(dc_warehouse: str, darkstore_warehouse: str
                     log_error(
                         error_category="Missing Reference",
                         error_description=f"No shipping address found for darkstore {darkstore_warehouse}",
-                        processing_stage="Sales Order Creation",
+                        processing_stage="Order Aggregation",
                         entity_type="Facility",
                         external_id=darkstore_warehouse,
                         reference_doctype="SF Facility Master",
@@ -1802,14 +1918,16 @@ def create_sales_order_for_darkstore(dc_warehouse: str, darkstore_warehouse: str
         
         if not sales_order.items:
             debug_print(f"No items to add to darkstore sales order for {darkstore_warehouse}")
-            frappe.db.rollback()
+            if transaction_started:
+                frappe.db.rollback()
             return None
             
         sales_order.insert()
         sales_order.submit()
         
-        # Commit the transaction
-        frappe.db.commit()
+        # Commit the transaction only if we started it
+        if transaction_started:
+            frappe.db.commit()
         
         debug_print(f"Successfully created darkstore sales order {sales_order.name}")
         
@@ -1824,13 +1942,14 @@ def create_sales_order_for_darkstore(dc_warehouse: str, darkstore_warehouse: str
         }
         
     except Exception as e:
-        # Rollback on error
-        frappe.db.rollback()
+        # Rollback only if we started the transaction
+        if transaction_started:
+            frappe.db.rollback()
         error_print(f"Error creating darkstore sales order: {str(e)}")
         log_error(
             error_category="Order Processing",
             error_description=f"Failed to create darkstore sales order: {str(e)}",
-            processing_stage="Sales Order Creation",
+            processing_stage="Order Aggregation",
             entity_type="Sales Order",
             reference_doctype="Sales Order",
             error_severity="High",
@@ -1851,8 +1970,14 @@ def create_sales_order_for_distribution_center(plant_warehouse: str, dc_warehous
     """
     Create sales order for distribution center (from plant to distribution center)
     """
-    # Start transaction for this sales order creation
-    frappe.db.begin()
+    # Check if we're already in a transaction
+    in_transaction = hasattr(frappe.db, 'transaction_writes') and frappe.db.transaction_writes > 0
+    transaction_started = False
+    
+    if not in_transaction:
+        # Start transaction only if not already in one
+        frappe.db.begin()
+        transaction_started = True
     
     try:
         debug_print(f"Creating sales order for distribution center {dc_warehouse}")
@@ -1866,7 +1991,8 @@ def create_sales_order_for_distribution_center(plant_warehouse: str, dc_warehous
         
         if not aggregated_items:
             debug_print(f"No items to aggregate for DC {dc_warehouse}")
-            frappe.db.rollback()
+            if transaction_started:
+                frappe.db.rollback()
             return None
         
         # Determine shipping address based on whether it's internal or external
@@ -1929,14 +2055,16 @@ def create_sales_order_for_distribution_center(plant_warehouse: str, dc_warehous
         
         if not sales_order.items:
             debug_print(f"No items to add to DC sales order for {dc_warehouse}")
-            frappe.db.rollback()
+            if transaction_started:
+                frappe.db.rollback()
             return None
             
         sales_order.insert()
         sales_order.submit()
         
-        # Commit the transaction
-        frappe.db.commit()
+        # Commit the transaction only if we started it
+        if transaction_started:
+            frappe.db.commit()
         
         debug_print(f"Successfully created DC sales order {sales_order.name}")
         
@@ -1951,13 +2079,14 @@ def create_sales_order_for_distribution_center(plant_warehouse: str, dc_warehous
         }
         
     except Exception as e:
-        # Rollback on error
-        frappe.db.rollback()
+        # Rollback only if we started the transaction
+        if transaction_started:
+            frappe.db.rollback()
         error_print(f"Error creating distribution center sales order: {str(e)}")
         log_error(
             error_category="Order Processing",
             error_description=f"Failed to create distribution center sales order: {str(e)}",
-            processing_stage="Sales Order Creation",
+            processing_stage="Order Aggregation",
             entity_type="Sales Order",
             reference_doctype="Sales Order",
             error_severity="High",
@@ -2206,8 +2335,14 @@ def mark_orders_and_items_as_processed(d2c_processing_results: Dict, b2b_process
     """
     debug_print("Marking orders and items as processed")
     
-    # Start transaction for this function
-    frappe.db.begin()
+    # Check if we're already in a transaction
+    in_transaction = hasattr(frappe.db, 'transaction_writes') and frappe.db.transaction_writes > 0
+    transaction_started = False
+    
+    if not in_transaction:
+        # Start transaction only if not already in one
+        frappe.db.begin()
+        transaction_started = True
     
     try:
         # Process D2C orders
@@ -2216,13 +2351,15 @@ def mark_orders_and_items_as_processed(d2c_processing_results: Dict, b2b_process
         # Process B2B orders
         mark_processing_results(b2b_processing_results, "B2B")
         
-        # Commit the changes
-        frappe.db.commit()
+        # Commit the changes only if we started the transaction
+        if transaction_started:
+            frappe.db.commit()
         info_print("Successfully marked orders and items as processed")
         
     except Exception as e:
-        # Rollback on error
-        frappe.db.rollback()
+        # Rollback only if we started the transaction
+        if transaction_started:
+            frappe.db.rollback()
         error_print(f"Error in mark_orders_and_items_as_processed: {str(e)}")
         # Log the error
         log_error(
@@ -2352,6 +2489,8 @@ def daily_order_aggregation():
         
         if result["status"] == "success":
             info_print(f"Daily order aggregation completed: {result['message']}")
+            # Flush any remaining deferred error logs
+            flush_deferred_error_logs()
             return result
         else:
             error_print(f"Daily order aggregation failed: {result['message']}")
@@ -2369,6 +2508,8 @@ def daily_order_aggregation():
                     "function": "daily_order_aggregation"
                 }
             )
+            # Flush any remaining deferred error logs
+            flush_deferred_error_logs()
             return result
             
     except Exception as e:
@@ -2388,6 +2529,8 @@ def daily_order_aggregation():
                 "exception_type": type(e).__name__
             }
         )
+        # Flush any remaining deferred error logs
+        flush_deferred_error_logs()
         return {
             "status": "error",
             "message": f"Error in daily_order_aggregation: {str(e)}",

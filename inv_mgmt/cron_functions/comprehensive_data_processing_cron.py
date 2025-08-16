@@ -95,6 +95,7 @@ def enqueue_comprehensive_data_processing_cron():
             queue="long",
             timeout=1500,  # 25 minutes timeout
             job_name="comprehensive_data_processing_cron",
+            # user="Administrator",
             is_async=True
         )
         print("Comprehensive data processing cron job has been enqueued successfully")
