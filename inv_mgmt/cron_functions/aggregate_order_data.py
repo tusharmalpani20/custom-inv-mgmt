@@ -56,8 +56,13 @@ def log_error(error_category: str, error_description: str, processing_stage: str
             "source_system": "Scheduled Jobs"
         })
         error_log.insert(ignore_permissions=True)
-        frappe.db.commit()
-        debug_print(f"Error logged: {error_description}")
+        
+        # Only commit if we're not in a transaction to avoid implicit commit errors
+        if not hasattr(frappe.db, 'transaction_writes') or frappe.db.transaction_writes == 0:
+            frappe.db.commit()
+            debug_print(f"Error logged: {error_description}")
+        else:
+            debug_print(f"Error logged (within transaction, will commit later): {error_description}")
     except Exception as e:
         error_print(f"Failed to log error: {str(e)}")
 
@@ -75,8 +80,8 @@ def aggregate_orders_and_create_sales_orders(branches: List[str], order_date: st
     Returns:
         Dict with aggregation results and created sales orders
     """
-    # Start transaction
-    frappe.db.begin()
+    # Remove transaction management from this level - let sub-functions handle their own transactions
+    # frappe.db.begin()  # REMOVED - this was causing the implicit commit error
     
     try:
         info_print(f"Starting order aggregation for branches: {branches}, date: {order_date}")
@@ -101,8 +106,8 @@ def aggregate_orders_and_create_sales_orders(branches: List[str], order_date: st
                 }
             )
             
-            # Commit transaction and return early
-            frappe.db.commit()
+            # Remove commit - let log_error handle its own transaction
+            # frappe.db.commit()  # REMOVED
             return {
                 "status": "success",
                 "hierarchy": {},
@@ -143,6 +148,15 @@ def aggregate_orders_and_create_sales_orders(branches: List[str], order_date: st
         
         # Step 5: Create cyclic sales orders
         # Combine D2C and B2B for internal transfers, but separate for customer deliveries
+        
+        # Ensure any pending transactions from error logging are committed before sales order creation
+        try:
+            if hasattr(frappe.db, 'transaction_writes') and frappe.db.transaction_writes > 0:
+                frappe.db.commit()
+                debug_print("Committed pending transactions before sales order creation")
+        except Exception as e:
+            debug_print(f"No pending transactions to commit: {str(e)}")
+        
         created_sales_orders = create_combined_sales_orders(
             processed_d2c_orders, processed_b2b_orders, order_date
         )
@@ -153,8 +167,8 @@ def aggregate_orders_and_create_sales_orders(branches: List[str], order_date: st
         # Step 6: Mark successfully processed orders and items
         mark_orders_and_items_as_processed(d2c_processing_results, b2b_processing_results)
         
-        # Commit transaction
-        frappe.db.commit()
+        # Remove commit - let mark_orders_and_items_as_processed handle its own transaction
+        # frappe.db.commit()  # REMOVED
         
         return {
             "status": "success",
@@ -170,8 +184,8 @@ def aggregate_orders_and_create_sales_orders(branches: List[str], order_date: st
         }
         
     except Exception as e:
-        # Rollback transaction on error
-        frappe.db.rollback()
+        # Remove rollback - no transaction was started at this level
+        # frappe.db.rollback()  # REMOVED
         error_print(f"Error in aggregate_orders_and_create_sales_orders: {str(e)}")
         
         # Log the error
@@ -796,7 +810,7 @@ def process_order_items(grouped_orders: Dict, order_type: str) -> tuple[Dict, Di
                             log_error(
                                 error_category="Order Processing",
                                 error_description=f"Order {order.name} discarded - no items could be processed",
-                                processing_stage="Order Processing",
+                                processing_stage="Business Logic",
                                 entity_type=f"Order {order_type}",
                                 external_id=order.order_id,
                                 reference_doctype="SF Order Master",
@@ -830,7 +844,7 @@ def process_order_items(grouped_orders: Dict, order_type: str) -> tuple[Dict, Di
         log_error(
             error_category="System Error",
             error_description=f"Error processing {order_type} order items: {str(e)}",
-            processing_stage="Order Processing",
+            processing_stage="Business Logic",
             entity_type=f"Order {order_type}",
             error_severity="Critical",
             additional_detail={
@@ -1046,111 +1060,140 @@ def create_combined_sales_orders(d2c_orders: Dict, b2b_orders: Dict, order_date:
     Combines D2C and B2B for internal transfers, separates for customer deliveries
     """
     info_print("Creating combined sales orders for D2C and B2B orders")
-    created_orders = []
     
-    # Get default company and internal customer
-    default_company = frappe.defaults.get_defaults().get("company")
-    internal_customer = get_internal_customer()
+    # Remove transaction management - let individual functions handle their own transactions
+    # frappe.db.begin()  # REMOVED - this was causing the implicit commit error
     
-    debug_print(f"Using company: {default_company}, customer: {internal_customer}")
-    
-    # Combine D2C and B2B orders by plant and DC for internal transfers
-    combined_orders = defaultdict(lambda: defaultdict(lambda: defaultdict(lambda: {"items": defaultdict(float), "orders": []})))
-    
-    # Add D2C items and orders
-    for plant, plant_data in d2c_orders.items():
-        for dc, dc_data in plant_data.items():
-            for darkstore, darkstore_data in dc_data.items():
-                # Add items
-                for item_code, quantity in darkstore_data.get("items", {}).items():
-                    combined_orders[plant][dc][darkstore]["items"][item_code] += quantity
-                # Add orders
-                combined_orders[plant][dc][darkstore]["orders"].extend(darkstore_data.get("orders", []))
-    
-    # Add B2B items and orders
-    for plant, plant_data in b2b_orders.items():
-        for dc, dc_data in plant_data.items():
-            for darkstore, darkstore_data in dc_data.items():
-                # Add items
-                for item_code, quantity in darkstore_data.get("items", {}).items():
-                    combined_orders[plant][dc][darkstore]["items"][item_code] += quantity
-                # Add orders
-                combined_orders[plant][dc][darkstore]["orders"].extend(darkstore_data.get("orders", []))
-    
-    # Now create sales orders
-    for plant, plant_data in combined_orders.items():
-        for dc, dc_data in plant_data.items():
-            
-            # Create ONE distribution center order (from plant to DC) with ALL items
-            dc_order = create_sales_order_for_distribution_center(
-                plant, dc, dc_data, order_date, internal_customer, default_company, True, "Internal"
-            )
-            if dc_order:
-                created_orders.append(dc_order)
-                info_print(f"Created combined DC order: {dc_order['sales_order']}")
-            
-            # Process each darkstore
-            for darkstore, darkstore_data in dc_data.items():
-                if darkstore == "DC_DIRECT":
-                    # Direct DC orders - create customer-specific orders for B2B only
-                    b2b_orders_list = [order for order in darkstore_data["orders"] if order.get("order_type") == "B2B"]
-                    if b2b_orders_list:
-                        customer_groups = group_b2b_orders_by_customer(b2b_orders_list)
-                        for customer, customer_orders in customer_groups.items():
-                            if customer != internal_customer:
-                                dc_direct_order = create_sales_order_for_dc_direct_with_orders(
-                                    dc, customer_orders, order_date, customer, default_company, False
-                                )
-                                if dc_direct_order:
-                                    created_orders.append(dc_direct_order)
-                                    info_print(f"Created DC direct order: {dc_direct_order['sales_order']}")
-                                    
-                elif darkstore == "CLIENT":
-                    # Direct plant to client orders - create customer-specific orders for B2B only
-                    b2b_orders_list = [order for order in darkstore_data["orders"] if order.get("order_type") == "B2B"]
-                    if b2b_orders_list:
-                        customer_groups = group_b2b_orders_by_customer(b2b_orders_list)
-                        for customer, customer_orders in customer_groups.items():
-                            if customer != internal_customer:
-                                plant_direct_order = create_sales_order_for_plant_direct_with_orders(
-                                    plant, customer_orders, order_date, customer, default_company, False
-                                )
-                                if plant_direct_order:
-                                    created_orders.append(plant_direct_order)
-                                    info_print(f"Created plant direct order: {plant_direct_order['sales_order']}")
-                else:
-                    # Regular darkstore orders
-                    # Create ONE internal transfer (DC to Darkstore) with ALL items
-                    if darkstore_data.get("items"):
-                        darkstore_order = create_sales_order_for_darkstore(
-                            dc, darkstore, darkstore_data, order_date, internal_customer, default_company, True, "Internal"
-                        )
-                        if darkstore_order:
-                            created_orders.append(darkstore_order)
-                            info_print(f"Created combined darkstore order: {darkstore_order['sales_order']}")
-                    
-                    # Create customer-specific orders from darkstore to client (B2B only)
-                    b2b_orders_list = [order for order in darkstore_data["orders"] if order.get("order_type") == "B2B"]
-                    if b2b_orders_list:
-                        customer_groups = group_b2b_orders_by_customer(b2b_orders_list)
-                        for customer, customer_orders in customer_groups.items():
-                            if customer != internal_customer:
-                                darkstore_to_client_order = create_sales_order_for_darkstore_to_client_with_orders(
-                                    darkstore, customer_orders, order_date, customer, default_company, False
-                                )
-                                if darkstore_to_client_order:
-                                    created_orders.append(darkstore_to_client_order)
-                                    info_print(f"Created darkstore to client order: {darkstore_to_client_order['sales_order']}")
-    
-    # Separate orders by type for reporting
-    d2c_orders_created = [order for order in created_orders if order.get("order_type") in ["D2C", "Internal"]]
-    b2b_orders_created = [order for order in created_orders if order.get("order_type") == "B2B"]
-    
-    return {
-        "d2c_orders": d2c_orders_created,
-        "b2b_orders": b2b_orders_created,
-        "total": len(created_orders)
-    }
+    try:
+        created_orders = []
+        
+        # Get default company and internal customer
+        default_company = frappe.defaults.get_defaults().get("company")
+        internal_customer = get_internal_customer()
+        
+        debug_print(f"Using company: {default_company}, customer: {internal_customer}")
+        
+        # Combine D2C and B2B orders by plant and DC for internal transfers
+        combined_orders = defaultdict(lambda: defaultdict(lambda: defaultdict(lambda: {"items": defaultdict(float), "orders": []})))
+        
+        # Add D2C items and orders
+        for plant, plant_data in d2c_orders.items():
+            for dc, dc_data in plant_data.items():
+                for darkstore, darkstore_data in dc_data.items():
+                    # Add items
+                    for item_code, quantity in darkstore_data.get("items", {}).items():
+                        combined_orders[plant][dc][darkstore]["items"][item_code] += quantity
+                    # Add orders
+                    combined_orders[plant][dc][darkstore]["orders"].extend(darkstore_data.get("orders", []))
+        
+        # Add B2B items and orders
+        for plant, plant_data in b2b_orders.items():
+            for dc, dc_data in plant_data.items():
+                for darkstore, darkstore_data in dc_data.items():
+                    # Add items
+                    for item_code, quantity in darkstore_data.get("items", {}).items():
+                        combined_orders[plant][dc][darkstore]["items"][item_code] += quantity
+                    # Add orders
+                    combined_orders[plant][dc][darkstore]["orders"].extend(darkstore_data.get("orders", []))
+        
+        # Now create sales orders
+        for plant, plant_data in combined_orders.items():
+            for dc, dc_data in plant_data.items():
+                
+                # Create ONE distribution center order (from plant to DC) with ALL items
+                dc_order = create_sales_order_for_distribution_center(
+                    plant, dc, dc_data, order_date, internal_customer, default_company, True, "Internal"
+                )
+                if dc_order:
+                    created_orders.append(dc_order)
+                    info_print(f"Created combined DC order: {dc_order['sales_order']}")
+                
+                # Process each darkstore
+                for darkstore, darkstore_data in dc_data.items():
+                    if darkstore == "DC_DIRECT":
+                        # Direct DC orders - create customer-specific orders for B2B only
+                        b2b_orders_list = [order for order in darkstore_data["orders"] if order.get("order_type") == "B2B"]
+                        if b2b_orders_list:
+                            customer_groups = group_b2b_orders_by_customer(b2b_orders_list)
+                            for customer, customer_orders in customer_groups.items():
+                                if customer != internal_customer:
+                                    dc_direct_order = create_sales_order_for_dc_direct_with_orders(
+                                        dc, customer_orders, order_date, customer, default_company, False
+                                    )
+                                    if dc_direct_order:
+                                        created_orders.append(dc_direct_order)
+                                        info_print(f"Created DC direct order: {dc_direct_order['sales_order']}")
+                                        
+                    elif darkstore == "CLIENT":
+                        # Direct plant to client orders - create customer-specific orders for B2B only
+                        b2b_orders_list = [order for order in darkstore_data["orders"] if order.get("order_type") == "B2B"]
+                        if b2b_orders_list:
+                            customer_groups = group_b2b_orders_by_customer(b2b_orders_list)
+                            for customer, customer_orders in customer_groups.items():
+                                if customer != internal_customer:
+                                    plant_direct_order = create_sales_order_for_plant_direct_with_orders(
+                                        plant, customer_orders, order_date, customer, default_company, False
+                                    )
+                                    if plant_direct_order:
+                                        created_orders.append(plant_direct_order)
+                                        info_print(f"Created plant direct order: {plant_direct_order['sales_order']}")
+                    else:
+                        # Regular darkstore orders
+                        # Create ONE internal transfer (DC to Darkstore) with ALL items
+                        if darkstore_data.get("items"):
+                            darkstore_order = create_sales_order_for_darkstore(
+                                dc, darkstore, darkstore_data, order_date, internal_customer, default_company, True, "Internal"
+                            )
+                            if darkstore_order:
+                                created_orders.append(darkstore_order)
+                                info_print(f"Created combined darkstore order: {darkstore_order['sales_order']}")
+                        
+                        # Create customer-specific orders from darkstore to client (B2B only)
+                        b2b_orders_list = [order for order in darkstore_data["orders"] if order.get("order_type") == "B2B"]
+                        if b2b_orders_list:
+                            customer_groups = group_b2b_orders_by_customer(b2b_orders_list)
+                            for customer, customer_orders in customer_groups.items():
+                                if customer != internal_customer:
+                                    darkstore_to_client_order = create_sales_order_for_darkstore_to_client_with_orders(
+                                        darkstore, customer_orders, order_date, customer, default_company, False
+                                    )
+                                    if darkstore_to_client_order:
+                                        created_orders.append(darkstore_to_client_order)
+                                        info_print(f"Created darkstore to client order: {darkstore_to_client_order['sales_order']}")
+        
+        # Remove commit - let individual functions handle their own transactions
+        # frappe.db.commit()  # REMOVED
+        
+        # Separate orders by type for reporting
+        d2c_orders_created = [order for order in created_orders if order.get("order_type") in ["D2C", "Internal"]]
+        b2b_orders_created = [order for order in created_orders if order.get("order_type") == "B2B"]
+        
+        return {
+            "d2c_orders": d2c_orders_created,
+            "b2b_orders": b2b_orders_created,
+            "total": len(created_orders)
+        }
+        
+    except Exception as e:
+        # Remove rollback - no transaction was started at this level
+        # frappe.db.rollback()  # REMOVED
+        error_print(f"Error in create_combined_sales_orders: {str(e)}")
+        log_error(
+            error_category="Sales Order Creation",
+            error_description=f"Failed to create combined sales orders: {str(e)}",
+            processing_stage="Sales Order Creation",
+            entity_type="Sales Order",
+            error_severity="Critical",
+            additional_detail={
+                "order_date": order_date,
+                "error": str(e)
+            }
+        )
+        return {
+            "d2c_orders": [],
+            "b2b_orders": [],
+            "total": 0
+        }
 
 
 def group_b2b_orders_by_customer(orders: List[Dict]) -> Dict[str, List[Dict]]:
@@ -1272,6 +1315,9 @@ def create_sales_order_for_dc_direct_with_orders(dc_warehouse: str, customer_ord
     """
     Create sales order for direct DC to client with specific orders
     """
+    # Start transaction for this sales order creation
+    frappe.db.begin()
+    
     try:
         debug_print(f"Creating direct DC to client sales order for {dc_warehouse} with {len(customer_orders)} orders")
         
@@ -1299,6 +1345,7 @@ def create_sales_order_for_dc_direct_with_orders(dc_warehouse: str, customer_ord
         
         if not aggregated_items:
             debug_print(f"No items to aggregate for DC direct order {dc_warehouse}")
+            frappe.db.rollback()
             return None
         
         # Get customer address for shipping
@@ -1336,10 +1383,14 @@ def create_sales_order_for_dc_direct_with_orders(dc_warehouse: str, customer_ord
         
         if not sales_order.items:
             debug_print(f"No items to add to DC direct sales order for {dc_warehouse}")
+            frappe.db.rollback()
             return None
             
         sales_order.insert()
         sales_order.submit()
+        
+        # Commit the transaction
+        frappe.db.commit()
         
         debug_print(f"Successfully created DC direct sales order {sales_order.name}")
         
@@ -1354,6 +1405,8 @@ def create_sales_order_for_dc_direct_with_orders(dc_warehouse: str, customer_ord
         }
         
     except Exception as e:
+        # Rollback on error
+        frappe.db.rollback()
         error_print(f"Error creating DC direct sales order: {str(e)}")
         return None
 
@@ -1363,6 +1416,9 @@ def create_sales_order_for_plant_direct_with_orders(plant_warehouse: str, custom
     """
     Create sales order for direct plant to client with specific orders
     """
+    # Start transaction for this sales order creation
+    frappe.db.begin()
+    
     try:
         debug_print(f"Creating direct plant to client sales order for {plant_warehouse} with {len(customer_orders)} orders")
         
@@ -1390,6 +1446,7 @@ def create_sales_order_for_plant_direct_with_orders(plant_warehouse: str, custom
         
         if not aggregated_items:
             debug_print(f"No items to aggregate for plant direct order {plant_warehouse}")
+            frappe.db.rollback()
             return None
         
         # Get customer address for shipping
@@ -1427,10 +1484,14 @@ def create_sales_order_for_plant_direct_with_orders(plant_warehouse: str, custom
         
         if not sales_order.items:
             debug_print(f"No items to add to plant direct sales order for {plant_warehouse}")
+            frappe.db.rollback()
             return None
             
         sales_order.insert()
         sales_order.submit()
+        
+        # Commit the transaction
+        frappe.db.commit()
         
         debug_print(f"Successfully created plant direct sales order {sales_order.name}")
         
@@ -1445,6 +1506,8 @@ def create_sales_order_for_plant_direct_with_orders(plant_warehouse: str, custom
         }
         
     except Exception as e:
+        # Rollback on error
+        frappe.db.rollback()
         error_print(f"Error creating plant direct sales order: {str(e)}")
         return None
 
@@ -1454,6 +1517,9 @@ def create_sales_order_for_darkstore_to_client_with_orders(darkstore_warehouse: 
     """
     Create sales order for Darkstore to Client with specific orders
     """
+    # Start transaction for this sales order creation
+    frappe.db.begin()
+    
     try:
         debug_print(f"Creating darkstore to client sales order for {darkstore_warehouse} with {len(customer_orders)} orders")
         
@@ -1481,6 +1547,7 @@ def create_sales_order_for_darkstore_to_client_with_orders(darkstore_warehouse: 
         
         if not aggregated_items:
             debug_print(f"No items to aggregate for darkstore to client order {darkstore_warehouse}")
+            frappe.db.rollback()
             return None
         
         # Get customer address for shipping
@@ -1518,10 +1585,14 @@ def create_sales_order_for_darkstore_to_client_with_orders(darkstore_warehouse: 
         
         if not sales_order.items:
             debug_print(f"No items to add to darkstore to client sales order for {darkstore_warehouse}")
+            frappe.db.rollback()
             return None
             
         sales_order.insert()
         sales_order.submit()
+        
+        # Commit the transaction
+        frappe.db.commit()
         
         debug_print(f"Successfully created darkstore to client sales order {sales_order.name}")
         
@@ -1536,6 +1607,8 @@ def create_sales_order_for_darkstore_to_client_with_orders(darkstore_warehouse: 
         }
         
     except Exception as e:
+        # Rollback on error
+        frappe.db.rollback()
         error_print(f"Error creating darkstore to client sales order: {str(e)}")
         log_error(
             error_category="Order Processing",
@@ -1646,6 +1719,9 @@ def create_sales_order_for_darkstore(dc_warehouse: str, darkstore_warehouse: str
     """
     Create sales order for darkstore (from distribution center to darkstore)
     """
+    # Start transaction for this sales order creation
+    frappe.db.begin()
+    
     try:
         debug_print(f"Creating sales order for darkstore {darkstore_warehouse}")
         
@@ -1725,10 +1801,14 @@ def create_sales_order_for_darkstore(dc_warehouse: str, darkstore_warehouse: str
         
         if not sales_order.items:
             debug_print(f"No items to add to darkstore sales order for {darkstore_warehouse}")
+            frappe.db.rollback()
             return None
             
         sales_order.insert()
         sales_order.submit()
+        
+        # Commit the transaction
+        frappe.db.commit()
         
         debug_print(f"Successfully created darkstore sales order {sales_order.name}")
         
@@ -1743,6 +1823,8 @@ def create_sales_order_for_darkstore(dc_warehouse: str, darkstore_warehouse: str
         }
         
     except Exception as e:
+        # Rollback on error
+        frappe.db.rollback()
         error_print(f"Error creating darkstore sales order: {str(e)}")
         log_error(
             error_category="Order Processing",
@@ -1768,6 +1850,9 @@ def create_sales_order_for_distribution_center(plant_warehouse: str, dc_warehous
     """
     Create sales order for distribution center (from plant to distribution center)
     """
+    # Start transaction for this sales order creation
+    frappe.db.begin()
+    
     try:
         debug_print(f"Creating sales order for distribution center {dc_warehouse}")
         
@@ -1780,6 +1865,7 @@ def create_sales_order_for_distribution_center(plant_warehouse: str, dc_warehous
         
         if not aggregated_items:
             debug_print(f"No items to aggregate for DC {dc_warehouse}")
+            frappe.db.rollback()
             return None
         
         # Determine shipping address based on whether it's internal or external
@@ -1842,10 +1928,14 @@ def create_sales_order_for_distribution_center(plant_warehouse: str, dc_warehous
         
         if not sales_order.items:
             debug_print(f"No items to add to DC sales order for {dc_warehouse}")
+            frappe.db.rollback()
             return None
             
         sales_order.insert()
         sales_order.submit()
+        
+        # Commit the transaction
+        frappe.db.commit()
         
         debug_print(f"Successfully created DC sales order {sales_order.name}")
         
@@ -1860,6 +1950,8 @@ def create_sales_order_for_distribution_center(plant_warehouse: str, dc_warehous
         }
         
     except Exception as e:
+        # Rollback on error
+        frappe.db.rollback()
         error_print(f"Error creating distribution center sales order: {str(e)}")
         log_error(
             error_category="Order Processing",
@@ -2113,6 +2205,9 @@ def mark_orders_and_items_as_processed(d2c_processing_results: Dict, b2b_process
     """
     debug_print("Marking orders and items as processed")
     
+    # Start transaction for this function
+    frappe.db.begin()
+    
     try:
         # Process D2C orders
         mark_processing_results(d2c_processing_results, "D2C")
@@ -2125,7 +2220,20 @@ def mark_orders_and_items_as_processed(d2c_processing_results: Dict, b2b_process
         info_print("Successfully marked orders and items as processed")
         
     except Exception as e:
+        # Rollback on error
+        frappe.db.rollback()
         error_print(f"Error in mark_orders_and_items_as_processed: {str(e)}")
+        # Log the error
+        log_error(
+            error_category="Order Processing",
+            error_description=f"Failed to mark orders and items as processed: {str(e)}",
+            processing_stage="Post Processing",
+            entity_type="Order Processing",
+            error_severity="Medium",
+            additional_detail={
+                "error": str(e)
+            }
+        )
 
 
 def mark_processing_results(processing_results: Dict, order_type: str) -> None:
@@ -2162,7 +2270,7 @@ def mark_processing_results(processing_results: Dict, order_type: str) -> None:
             log_error(
                 error_category="Order Processing",
                 error_description=f"Failed to mark order {order_name} as processed: {str(e)}",
-                processing_stage="Order Status Update",
+                processing_stage="Post Processing",
                 entity_type=f"Order {order_type}",
                 reference_doctype="SF Order Master",
                 internal_reference=order_name,
@@ -2224,16 +2332,16 @@ def daily_order_aggregation():
     try:
         info_print("Starting daily order aggregation job")
         
-        # Get all active branches
-        branches = frappe.db.sql("""
-            SELECT name
-            FROM `tabBranch`
-        """, as_dict=True)
+        # # Get all active branches
+        # branches = frappe.db.sql("""
+        #     SELECT name
+        #     FROM `tabBranch`
+        # """, as_dict=True)
         
-        branch_names = [branch.name for branch in branches]
+        # branch_names = [branch.name for branch in branches]
         # yesterday = add_days(nowdate(), -1)
 
-        # branch_names = ["Hyderabad"]
+        branch_names = ["Hyderabad"]
         yesterday = "2025-08-10"
         
         info_print(f"Processing branches: {branch_names}, date: {yesterday}")
@@ -2245,13 +2353,47 @@ def daily_order_aggregation():
             return result
         else:
             error_print(f"Daily order aggregation failed: {result['message']}")
+            # Log the error with more details
+            log_error(
+                error_category="System Error",
+                error_description=f"Daily order aggregation failed: {result['message']}",
+                processing_stage="Order Aggregation",
+                entity_type="Order D2C",
+                error_severity="Critical",
+                additional_detail={
+                    "branches": branch_names,
+                    "order_date": yesterday,
+                    "error_message": result['message'],
+                    "function": "daily_order_aggregation"
+                }
+            )
             return result
             
     except Exception as e:
         error_print(f"Error in daily_order_aggregation: {str(e)}")
+        # Log the error with more details
+        log_error(
+            error_category="System Error",
+            error_description=f"Daily order aggregation exception: {str(e)}",
+            processing_stage="Order Aggregation",
+            entity_type="Order D2C",
+            error_severity="Critical",
+            additional_detail={
+                "branches": branch_names if 'branch_names' in locals() else [],
+                "order_date": yesterday if 'yesterday' in locals() else None,
+                "error": str(e),
+                "function": "daily_order_aggregation",
+                "exception_type": type(e).__name__
+            }
+        )
         return {
             "status": "error",
-            "message": f"Error in daily_order_aggregation: {str(e)}"
+            "message": f"Error in daily_order_aggregation: {str(e)}",
+            "error_details": {
+                "exception_type": type(e).__name__,
+                "error_message": str(e),
+                "function": "daily_order_aggregation"
+            }
         }
 
 

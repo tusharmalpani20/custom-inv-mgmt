@@ -111,14 +111,19 @@ def import_d2c_orders():
         
         success_count = 0
         error_count = 0
+        skipped_count = 0
         errors = []
         
         for order_data in orders_data:
             try:
                 print(f"Processing order: {order_data.get('order_id')}")
-                create_order_master_record(order_data)
-                success_count += 1
-                print(f"Successfully created order: {order_data.get('order_id')}")
+                result = create_order_master_record(order_data)
+                if result == "skipped":
+                    skipped_count += 1
+                    print(f"Skipped existing order: {order_data.get('order_id')}")
+                else:
+                    success_count += 1
+                    print(f"Successfully created order: {order_data.get('order_id')}")
                 
             except Exception as e:
                 error_count += 1
@@ -156,11 +161,11 @@ def import_d2c_orders():
         # Commit transaction
         frappe.db.commit()
         
-        print(f"D2C order import completed. Success: {success_count}, Errors: {error_count}")
+        print(f"D2C order import completed. Success: {success_count}, Skipped: {skipped_count}, Errors: {error_count}")
         
         return {
             "success": True,
-            "message": f"D2C order import completed. Success: {success_count}, Errors: {error_count}",
+            "message": f"D2C order import completed. Success: {success_count}, Skipped: {skipped_count}, Errors: {error_count}",
             "errors": errors if errors else None
         }
         
@@ -248,14 +253,19 @@ def import_b2b_orders():
         
         success_count = 0
         error_count = 0
+        skipped_count = 0
         errors = []
         
         for order_data in orders_data:
             try:
                 print(f"Processing B2B order: {order_data.get('order_id')}")
-                create_b2b_order_master_record(order_data)
-                success_count += 1
-                print(f"Successfully created B2B order: {order_data.get('order_id')}")
+                result = create_b2b_order_master_record(order_data)
+                if result == "skipped":
+                    skipped_count += 1
+                    print(f"Skipped existing B2B order: {order_data.get('order_id')}")
+                else:
+                    success_count += 1
+                    print(f"Successfully created B2B order: {order_data.get('order_id')}")
                 
             except Exception as e:
                 error_count += 1
@@ -293,11 +303,11 @@ def import_b2b_orders():
         # Commit transaction
         frappe.db.commit()
         
-        print(f"B2B order import completed. Success: {success_count}, Errors: {error_count}")
+        print(f"B2B order import completed. Success: {success_count}, Skipped: {skipped_count}, Errors: {error_count}")
         
         return {
             "success": True,
-            "message": f"B2B order import completed. Success: {success_count}, Errors: {error_count}",
+            "message": f"B2B order import completed. Success: {success_count}, Skipped: {skipped_count}, Errors: {error_count}",
             "errors": errors if errors else None
         }
         
@@ -330,7 +340,7 @@ def create_order_master_record(order_data):
         
         if existing_order:
             print(f"Order {order_id} already exists, skipping...")
-            return
+            return "skipped"
 
         # Validate darkstore presence for D2C orders (mandatory for D2C)
         darkstore_data = order_data.get("darkstore", {})
@@ -469,6 +479,7 @@ def create_order_master_record(order_data):
             )
         
         print(f"Created SF Order Master: {order_master.name}")
+        return "created"
         
     except Exception as e:
         # Create error log for order creation failure
@@ -506,7 +517,7 @@ def create_b2b_order_master_record(order_data):
         
         if existing_order:
             print(f"B2B Order {order_id} already exists, skipping...")
-            return
+            return "skipped"
         
         # Get or create plant facility
         plant_data = order_data.get("plant", {})
@@ -661,6 +672,7 @@ def create_b2b_order_master_record(order_data):
             )
         
         print(f"Created B2B SF Order Master: {order_master.name}")
+        return "created"
         
     except Exception as e:
         # Create error log for order creation failure
@@ -833,7 +845,6 @@ def enqueue_import_all_orders():
             queue="long",
             timeout=1200,  # 20 minutes timeout
             job_name="import_all_orders",
-            track_job=True,
             is_async=True
         )
         print("Import all orders job has been enqueued successfully")

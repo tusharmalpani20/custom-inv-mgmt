@@ -62,7 +62,7 @@ def comprehensive_data_processing_cron():
         print(f"Step 5 completed: {result5}")
         
         total_time = time.time() - start_time
-        print(f"Comprehensive data processing completed successfully in {total_time:.2f} seconds")
+        print(f"✅ Comprehensive data processing completed successfully in {total_time:.2f} seconds")
         
         return {
             "status": "success",
@@ -72,11 +72,17 @@ def comprehensive_data_processing_cron():
         
     except Exception as e:
         total_time = time.time() - start_time
-        print(f"Error in comprehensive cron: {str(e)}")
+        error_msg = f"Error in comprehensive cron: {str(e)}"
+        print(f"❌ {error_msg}")
+        
         return {
             "status": "error",
-            "message": f"Error: {str(e)}",
-            "total_time": total_time
+            "message": error_msg,
+            "total_time": total_time,
+            "error_details": {
+                "exception_type": type(e).__name__,
+                "error_message": str(e)
+            }
         }
 
 def enqueue_comprehensive_data_processing_cron():
