@@ -219,6 +219,18 @@ class SFIndentMaster(Document):
 		Called from Fetch Items button.
 		"""
 		try:
+			# Remove any existing rows where SKU is not set
+			if self.items:
+				# Create a list of items to remove (those without SKU)
+				items_to_remove = []
+				for i, item in enumerate(self.items):
+					if not item.sku:
+						items_to_remove.append(i)
+				
+				# Remove items in reverse order to maintain correct indices
+				for i in reversed(items_to_remove):
+					self.items.pop(i)
+			
 			# Get all items sorted by name
 			items = frappe.get_all("Item", 
 				filters={"has_variants": 0, "disabled": 0, "is_stock_item": 1},
@@ -235,6 +247,7 @@ class SFIndentMaster(Document):
 			
 			added_count = 0
 			skipped_count = 0
+			removed_count = len(items_to_remove) if 'items_to_remove' in locals() else 0
 			
 			# Process each item to get crate details with default quantity 0
 			for item in items:
@@ -249,6 +262,7 @@ class SFIndentMaster(Document):
 				# Add new item to the table
 				new_item = self.append('items', {})
 				new_item.sku = item.item_code
+				new_item.sku_name = item.item_name
 				new_item.uom = item.stock_uom
 				new_item.quantity = 0
 				new_item.crates = crate_details.get("crates", 0)
@@ -260,6 +274,8 @@ class SFIndentMaster(Document):
 			
 			# Show success message
 			message = f"Added {added_count} new items"
+			if removed_count > 0:
+				message += f", removed {removed_count} rows without SKU"
 			if skipped_count > 0:
 				message += f", skipped {skipped_count} existing items"
 			
