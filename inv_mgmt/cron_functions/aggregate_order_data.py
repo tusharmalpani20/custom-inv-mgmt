@@ -2332,21 +2332,22 @@ def daily_order_aggregation():
     try:
         info_print("Starting daily order aggregation job")
         
-        # # Get all active branches
-        # branches = frappe.db.sql("""
-        #     SELECT name
-        #     FROM `tabBranch`
-        # """, as_dict=True)
+        # Get all active branches
+        branches = frappe.db.sql("""
+            SELECT name
+            FROM `tabBranch`
+        """, as_dict=True)
         
-        # branch_names = [branch.name for branch in branches]
-        # yesterday = add_days(nowdate(), -1)
+        branch_names = [branch.name for branch in branches]
+        # yesterday = add_days(nowdate(), -1) # we do not need to add -1 as we are using today's date
+        current_date = today()
 
-        branch_names = ["Hyderabad"]
-        yesterday = "2025-08-10"
+        # branch_names = ["Hyderabad"]
+        # yesterday = "2025-08-10"
         
-        info_print(f"Processing branches: {branch_names}, date: {yesterday}")
+        info_print(f"Processing branches: {branch_names}, date: {current_date}")
         
-        result = aggregate_orders_and_create_sales_orders(branch_names, yesterday)
+        result = aggregate_orders_and_create_sales_orders(branch_names, current_date)
         
         if result["status"] == "success":
             info_print(f"Daily order aggregation completed: {result['message']}")
@@ -2362,7 +2363,7 @@ def daily_order_aggregation():
                 error_severity="Critical",
                 additional_detail={
                     "branches": branch_names,
-                    "order_date": yesterday,
+                    "order_date": current_date,
                     "error_message": result['message'],
                     "function": "daily_order_aggregation"
                 }
@@ -2380,7 +2381,7 @@ def daily_order_aggregation():
             error_severity="Critical",
             additional_detail={
                 "branches": branch_names if 'branch_names' in locals() else [],
-                "order_date": yesterday if 'yesterday' in locals() else None,
+                "order_date": current_date if 'current_date' in locals() else None,
                 "error": str(e),
                 "function": "daily_order_aggregation",
                 "exception_type": type(e).__name__

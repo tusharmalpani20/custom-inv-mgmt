@@ -12,7 +12,9 @@ def get_sku_items():
 
         limit_page_length=10000,
 
-        ignore_permissions=True
+        ignore_permissions=True,
+        
+        order_by="item_name asc"
 
     )
 

@@ -211,6 +211,64 @@ class SFIndentMaster(Document):
 					indicator="green",
 					alert=True
 				)
+	
+	@frappe.whitelist()
+	def pre_populate_indent_items(self):
+		"""
+		Pre-populate SF Indent Master with all available items
+		Called from Fetch Items button.
+		"""
+		try:
+			# Get all items sorted by name
+			items = frappe.get_all("Item", 
+				filters={"has_variants": 0, "disabled": 0, "is_stock_item": 1},
+				fields=["item_code", "item_name", "stock_uom"],
+				limit_page_length=10000,
+				ignore_permissions=True,
+				order_by="item_name asc"
+			)
+			
+			# Get existing SKUs to avoid duplicates
+			existing_skus = []
+			if self.items:
+				existing_skus = [item.sku for item in self.items if item.sku]
+			
+			added_count = 0
+			skipped_count = 0
+			
+			# Process each item to get crate details with default quantity 0
+			for item in items:
+				# Skip if item already exists
+				if item.item_code in existing_skus:
+					skipped_count += 1
+					continue
+					
+				# Get crate details for quantity 0
+				crate_details = get_crate_details_for_item(item.item_code, 0)
+				
+				# Add new item to the table
+				new_item = self.append('items', {})
+				new_item.sku = item.item_code
+				new_item.uom = item.stock_uom
+				new_item.quantity = 0
+				new_item.crates = crate_details.get("crates", 0)
+				new_item.loose = crate_details.get("loose", 0)
+				new_item.difference = 0
+				new_item.actual = 0
+				
+				added_count += 1
+			
+			# Show success message
+			message = f"Added {added_count} new items"
+			if skipped_count > 0:
+				message += f", skipped {skipped_count} existing items"
+			
+			frappe.msgprint(message, alert=True)
+			
+		except Exception as e:
+			frappe.log_error(f"Error pre-populating indent items: {str(e)}", "Pre-populate Indent Items Error")
+			frappe.throw(f"Error fetching items: {str(e)}")
+
 
 	# def create_draft_sales_order(self):
 	# 	"""Create a draft Sales Order from the SFIndentMaster"""
@@ -347,3 +405,39 @@ def get_crate_details(sku, quantity):
 			'has_crate_conversion': False,
 			'message': f"Error calculating crates: {str(e)}"
 		}
+
+
+
+def get_crate_details_for_item(sku, quantity):
+    """
+    Get crate details for a specific item and quantity
+    
+    Args:
+        sku: Item code
+        quantity: Quantity to calculate for
+    
+    Returns:
+        Dictionary with crates, loose, and actual quantities
+    """
+    try:
+        # Call the existing crate calculation function
+        result = get_crate_details(sku, quantity)
+        
+        if isinstance(result, dict) and "error" not in result:
+            return result
+        else:
+            # Return default values if calculation fails
+            return {
+                "crates": 0,
+                "loose": quantity,
+                "actual": quantity
+            }
+            
+    except Exception as e:
+        frappe.log_error(f"Error getting crate details for {sku}: {str(e)}", "Crate Details Error")
+        # Return default values as fallback
+        return {
+            "crates": 0,
+            "loose": quantity,
+            "actual": quantity
+        }

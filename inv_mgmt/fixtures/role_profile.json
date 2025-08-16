@@ -1,260 +1,557 @@
 [
- {
-  "docstatus": 0,
-  "doctype": "Role Profile",
-  "modified": "2024-11-30 18:21:16.989171",
-  "name": "Inventory",
-  "role_profile": "Inventory",
-  "roles": [
-   {
-    "parent": "Inventory",
-    "parentfield": "roles",
-    "parenttype": "Role Profile",
-    "role": "Stock User"
-   },
-   {
-    "parent": "Inventory",
-    "parentfield": "roles",
-    "parenttype": "Role Profile",
-    "role": "Stock Manager"
-   },
-   {
-    "parent": "Inventory",
-    "parentfield": "roles",
-    "parenttype": "Role Profile",
-    "role": "Item Manager"
-   }
-  ]
- },
- {
-  "docstatus": 0,
-  "doctype": "Role Profile",
-  "modified": "2024-11-30 18:21:16.995035",
-  "name": "Manufacturing",
-  "role_profile": "Manufacturing",
-  "roles": [
-   {
-    "parent": "Manufacturing",
-    "parentfield": "roles",
-    "parenttype": "Role Profile",
-    "role": "Stock User"
-   },
-   {
-    "parent": "Manufacturing",
-    "parentfield": "roles",
-    "parenttype": "Role Profile",
-    "role": "Manufacturing User"
-   },
-   {
-    "parent": "Manufacturing",
-    "parentfield": "roles",
-    "parenttype": "Role Profile",
-    "role": "Manufacturing Manager"
-   }
-  ]
- },
- {
-  "docstatus": 0,
-  "doctype": "Role Profile",
-  "modified": "2024-11-30 18:21:17.000892",
-  "name": "Accounts",
-  "role_profile": "Accounts",
-  "roles": [
-   {
-    "parent": "Accounts",
-    "parentfield": "roles",
-    "parenttype": "Role Profile",
-    "role": "Accounts User"
-   },
-   {
-    "parent": "Accounts",
-    "parentfield": "roles",
-    "parenttype": "Role Profile",
-    "role": "Accounts Manager"
-   }
-  ]
- },
- {
-  "docstatus": 0,
-  "doctype": "Role Profile",
-  "modified": "2024-11-30 18:21:17.005452",
-  "name": "Sales",
-  "role_profile": "Sales",
-  "roles": [
-   {
-    "parent": "Sales",
-    "parentfield": "roles",
-    "parenttype": "Role Profile",
-    "role": "Sales User"
-   },
-   {
-    "parent": "Sales",
-    "parentfield": "roles",
-    "parenttype": "Role Profile",
-    "role": "Stock User"
-   },
-   {
-    "parent": "Sales",
-    "parentfield": "roles",
-    "parenttype": "Role Profile",
-    "role": "Sales Manager"
-   }
-  ]
- },
- {
-  "docstatus": 0,
-  "doctype": "Role Profile",
-  "modified": "2024-11-30 18:21:17.010419",
-  "name": "Purchase",
-  "role_profile": "Purchase",
-  "roles": [
-   {
-    "parent": "Purchase",
-    "parentfield": "roles",
-    "parenttype": "Role Profile",
-    "role": "Item Manager"
-   },
-   {
-    "parent": "Purchase",
-    "parentfield": "roles",
-    "parenttype": "Role Profile",
-    "role": "Stock User"
-   },
-   {
-    "parent": "Purchase",
-    "parentfield": "roles",
-    "parenttype": "Role Profile",
-    "role": "Purchase User"
-   },
-   {
-    "parent": "Purchase",
-    "parentfield": "roles",
-    "parenttype": "Role Profile",
-    "role": "Purchase Manager"
-   }
-  ]
- },
- {
-  "docstatus": 0,
-  "doctype": "Role Profile",
-  "modified": "2025-02-27 17:39:06.892818",
-  "name": "Analyst Team",
-  "role_profile": "Analyst Team",
-  "roles": [
-   {
-    "parent": "Analyst Team",
-    "parentfield": "roles",
-    "parenttype": "Role Profile",
-    "role": "Analyst Team"
-   }
-  ]
- },
- {
-  "docstatus": 0,
-  "doctype": "Role Profile",
-  "modified": "2024-12-09 14:55:56.117369",
-  "name": "LMM",
-  "role_profile": "LMM",
-  "roles": [
-   {
-    "parent": "LMM",
-    "parentfield": "roles",
-    "parenttype": "Role Profile",
-    "role": "Last Mile Manager(LMM)"
-   },
-   {
-    "parent": "LMM",
-    "parentfield": "roles",
-    "parenttype": "Role Profile",
-    "role": "HR Manager"
-   },
-   {
-    "parent": "LMM",
-    "parentfield": "roles",
-    "parenttype": "Role Profile",
-    "role": "HR User"
-   }
-  ]
- },
- {
-  "docstatus": 0,
-  "doctype": "Role Profile",
-  "modified": "2025-01-17 11:01:46.879145",
-  "name": "LMH",
-  "role_profile": "LMH",
-  "roles": [
-   {
-    "parent": "LMH",
-    "parentfield": "roles",
-    "parenttype": "Role Profile",
-    "role": "Last Mile Head(LMH)"
-   },
-   {
-    "parent": "LMH",
-    "parentfield": "roles",
-    "parenttype": "Role Profile",
-    "role": "HR User"
-   },
-   {
-    "parent": "LMH",
-    "parentfield": "roles",
-    "parenttype": "Role Profile",
-    "role": "HR Manager"
-   },
-   {
-    "parent": "LMH",
-    "parentfield": "roles",
-    "parenttype": "Role Profile",
-    "role": "Leave Approver"
-   }
-  ]
- },
- {
-  "docstatus": 0,
-  "doctype": "Role Profile",
-  "modified": "2025-01-17 11:01:41.227498",
-  "name": "LMZm",
-  "role_profile": "LMZm",
-  "roles": [
-   {
-    "parent": "LMZm",
-    "parentfield": "roles",
-    "parenttype": "Role Profile",
-    "role": "HR User"
-   },
-   {
-    "parent": "LMZm",
-    "parentfield": "roles",
-    "parenttype": "Role Profile",
-    "role": "Last Mile Zonal Head(LMZm)"
-   },
-   {
-    "parent": "LMZm",
-    "parentfield": "roles",
-    "parenttype": "Role Profile",
-    "role": "Leave Approver"
-   }
-  ]
- },
- {
-  "docstatus": 0,
-  "doctype": "Role Profile",
-  "modified": "2025-01-17 11:01:12.970125",
-  "name": "LML",
-  "role_profile": "LML",
-  "roles": [
-   {
-    "parent": "LML",
-    "parentfield": "roles",
-    "parenttype": "Role Profile",
-    "role": "Last Mile Lead(LML)"
-   },
-   {
-    "parent": "LML",
-    "parentfield": "roles",
-    "parenttype": "Role Profile",
-    "role": "Leave Approver"
-   }
-  ]
- }
-]
+    {
+     "docstatus": 0,
+     "doctype": "Role Profile",
+     "modified": "2025-08-05 20:38:08.847546",
+     "name": "RND Executive",
+     "role_profile": "RND Executive",
+     "roles": [
+      {
+       "parent": "RND Executive",
+       "parentfield": "roles",
+       "parenttype": "Role Profile",
+       "role": "Demand Planner Submission-R&D"
+      },
+      {
+       "parent": "RND Executive",
+       "parentfield": "roles",
+       "parenttype": "Role Profile",
+       "role": "R&D-Executive"
+      }
+     ]
+    },
+    {
+     "docstatus": 0,
+     "doctype": "Role Profile",
+     "modified": "2025-08-05 20:40:21.377592",
+     "name": "CRP Executive",
+     "role_profile": "CRP Executive",
+     "roles": [
+      {
+       "parent": "CRP Executive",
+       "parentfield": "roles",
+       "parenttype": "Role Profile",
+       "role": "CRP-Executive"
+      },
+      {
+       "parent": "CRP Executive",
+       "parentfield": "roles",
+       "parenttype": "Role Profile",
+       "role": "Demand Planner Submission-CRD"
+      }
+     ]
+    },
+    {
+     "docstatus": 0,
+     "doctype": "Role Profile",
+     "modified": "2025-08-05 20:40:44.851523",
+     "name": "CRP Sr. Executive",
+     "role_profile": "CRP Sr. Executive",
+     "roles": [
+      {
+       "parent": "CRP Sr. Executive",
+       "parentfield": "roles",
+       "parenttype": "Role Profile",
+       "role": "Demand Planner Submission-CRD"
+      },
+      {
+       "parent": "CRP Sr. Executive",
+       "parentfield": "roles",
+       "parenttype": "Role Profile",
+       "role": "CRP-Sr. Executive"
+      }
+     ]
+    },
+    {
+     "docstatus": 0,
+     "doctype": "Role Profile",
+     "modified": "2025-08-05 20:41:10.133887",
+     "name": "CRP Asst. Manager",
+     "role_profile": "CRP Asst. Manager",
+     "roles": [
+      {
+       "parent": "CRP Asst. Manager",
+       "parentfield": "roles",
+       "parenttype": "Role Profile",
+       "role": "CRP-Asst. Manager"
+      },
+      {
+       "parent": "CRP Asst. Manager",
+       "parentfield": "roles",
+       "parenttype": "Role Profile",
+       "role": "Demand Planner Approval-CRP"
+      }
+     ]
+    },
+    {
+     "docstatus": 0,
+     "doctype": "Role Profile",
+     "modified": "2025-08-05 20:43:42.739785",
+     "name": "B2C Executive",
+     "role_profile": "B2C Executive",
+     "roles": [
+      {
+       "parent": "B2C Executive",
+       "parentfield": "roles",
+       "parenttype": "Role Profile",
+       "role": "CRP-Sr. Executive"
+      },
+      {
+       "parent": "B2C Executive",
+       "parentfield": "roles",
+       "parenttype": "Role Profile",
+       "role": "Demand Planner Submission-B2C"
+      },
+      {
+       "parent": "B2C Executive",
+       "parentfield": "roles",
+       "parenttype": "Role Profile",
+       "role": "B2C-Executive"
+      }
+     ]
+    },
+    {
+     "docstatus": 0,
+     "doctype": "Role Profile",
+     "modified": "2025-08-05 20:43:58.537973",
+     "name": "B2C Sr. Executive",
+     "role_profile": "B2C Sr. Executive",
+     "roles": [
+      {
+       "parent": "B2C Sr. Executive",
+       "parentfield": "roles",
+       "parenttype": "Role Profile",
+       "role": "CRP-Sr. Executive"
+      },
+      {
+       "parent": "B2C Sr. Executive",
+       "parentfield": "roles",
+       "parenttype": "Role Profile",
+       "role": "Demand Planner Submission-B2C"
+      },
+      {
+       "parent": "B2C Sr. Executive",
+       "parentfield": "roles",
+       "parenttype": "Role Profile",
+       "role": "B2C-Sr. Executive"
+      }
+     ]
+    },
+    {
+     "docstatus": 0,
+     "doctype": "Role Profile",
+     "modified": "2025-08-05 20:45:54.967829",
+     "name": "Agents Executive",
+     "role_profile": "Agents Executive",
+     "roles": [
+      {
+       "parent": "Agents Executive",
+       "parentfield": "roles",
+       "parenttype": "Role Profile",
+       "role": "Demand Planner Submission-AGT"
+      },
+      {
+       "parent": "Agents Executive",
+       "parentfield": "roles",
+       "parenttype": "Role Profile",
+       "role": "Agents-Executive"
+      }
+     ]
+    },
+    {
+     "docstatus": 0,
+     "doctype": "Role Profile",
+     "modified": "2025-08-05 20:45:49.328423",
+     "name": "Agents Pan India Manager",
+     "role_profile": "Agents Pan India Manager",
+     "roles": [
+      {
+       "parent": "Agents Pan India Manager",
+       "parentfield": "roles",
+       "parenttype": "Role Profile",
+       "role": "Agents-Pan India Manager"
+      },
+      {
+       "parent": "Agents Pan India Manager",
+       "parentfield": "roles",
+       "parenttype": "Role Profile",
+       "role": "Demand Planner Approval-AGT"
+      }
+     ]
+    },
+    {
+     "docstatus": 0,
+     "doctype": "Role Profile",
+     "modified": "2025-08-05 20:46:30.336111",
+     "name": "Promotions Executive",
+     "role_profile": "Promotions Executive",
+     "roles": [
+      {
+       "parent": "Promotions Executive",
+       "parentfield": "roles",
+       "parenttype": "Role Profile",
+       "role": "Demand Planner Submission-PRM"
+      },
+      {
+       "parent": "Promotions Executive",
+       "parentfield": "roles",
+       "parenttype": "Role Profile",
+       "role": "Promotions-Executive"
+      }
+     ]
+    },
+    {
+     "docstatus": 0,
+     "doctype": "Role Profile",
+     "modified": "2025-08-05 20:46:52.793638",
+     "name": "Promotions Asst. manager",
+     "role_profile": "Promotions Asst. manager",
+     "roles": [
+      {
+       "parent": "Promotions Asst. manager",
+       "parentfield": "roles",
+       "parenttype": "Role Profile",
+       "role": "Promotions-Ast. Manager"
+      },
+      {
+       "parent": "Promotions Asst. manager",
+       "parentfield": "roles",
+       "parenttype": "Role Profile",
+       "role": "Demand Planner Approval-PRM"
+      }
+     ]
+    },
+    {
+     "docstatus": 0,
+     "doctype": "Role Profile",
+     "modified": "2025-08-05 20:47:29.330867",
+     "name": "MMB Analyst",
+     "role_profile": "MMB Analyst",
+     "roles": [
+      {
+       "parent": "MMB Analyst",
+       "parentfield": "roles",
+       "parenttype": "Role Profile",
+       "role": "Promotions-Ast. Manager"
+      },
+      {
+       "parent": "MMB Analyst",
+       "parentfield": "roles",
+       "parenttype": "Role Profile",
+       "role": "Demand Planner Submission-MMB"
+      },
+      {
+       "parent": "MMB Analyst",
+       "parentfield": "roles",
+       "parenttype": "Role Profile",
+       "role": "MMB-Analyst"
+      }
+     ]
+    },
+    {
+     "docstatus": 0,
+     "doctype": "Role Profile",
+     "modified": "2024-11-30 18:21:16.989171",
+     "name": "Inventory",
+     "role_profile": "Inventory",
+     "roles": [
+      {
+       "parent": "Inventory",
+       "parentfield": "roles",
+       "parenttype": "Role Profile",
+       "role": "Stock User"
+      },
+      {
+       "parent": "Inventory",
+       "parentfield": "roles",
+       "parenttype": "Role Profile",
+       "role": "Stock Manager"
+      },
+      {
+       "parent": "Inventory",
+       "parentfield": "roles",
+       "parenttype": "Role Profile",
+       "role": "Item Manager"
+      }
+     ]
+    },
+    {
+     "docstatus": 0,
+     "doctype": "Role Profile",
+     "modified": "2024-11-30 18:21:16.995035",
+     "name": "Manufacturing",
+     "role_profile": "Manufacturing",
+     "roles": [
+      {
+       "parent": "Manufacturing",
+       "parentfield": "roles",
+       "parenttype": "Role Profile",
+       "role": "Stock User"
+      },
+      {
+       "parent": "Manufacturing",
+       "parentfield": "roles",
+       "parenttype": "Role Profile",
+       "role": "Manufacturing User"
+      },
+      {
+       "parent": "Manufacturing",
+       "parentfield": "roles",
+       "parenttype": "Role Profile",
+       "role": "Manufacturing Manager"
+      }
+     ]
+    },
+    {
+     "docstatus": 0,
+     "doctype": "Role Profile",
+     "modified": "2024-11-30 18:21:17.000892",
+     "name": "Accounts",
+     "role_profile": "Accounts",
+     "roles": [
+      {
+       "parent": "Accounts",
+       "parentfield": "roles",
+       "parenttype": "Role Profile",
+       "role": "Accounts User"
+      },
+      {
+       "parent": "Accounts",
+       "parentfield": "roles",
+       "parenttype": "Role Profile",
+       "role": "Accounts Manager"
+      }
+     ]
+    },
+    {
+     "docstatus": 0,
+     "doctype": "Role Profile",
+     "modified": "2024-11-30 18:21:17.005452",
+     "name": "Sales",
+     "role_profile": "Sales",
+     "roles": [
+      {
+       "parent": "Sales",
+       "parentfield": "roles",
+       "parenttype": "Role Profile",
+       "role": "Sales User"
+      },
+      {
+       "parent": "Sales",
+       "parentfield": "roles",
+       "parenttype": "Role Profile",
+       "role": "Stock User"
+      },
+      {
+       "parent": "Sales",
+       "parentfield": "roles",
+       "parenttype": "Role Profile",
+       "role": "Sales Manager"
+      }
+     ]
+    },
+    {
+     "docstatus": 0,
+     "doctype": "Role Profile",
+     "modified": "2024-11-30 18:21:17.010419",
+     "name": "Purchase",
+     "role_profile": "Purchase",
+     "roles": [
+      {
+       "parent": "Purchase",
+       "parentfield": "roles",
+       "parenttype": "Role Profile",
+       "role": "Item Manager"
+      },
+      {
+       "parent": "Purchase",
+       "parentfield": "roles",
+       "parenttype": "Role Profile",
+       "role": "Stock User"
+      },
+      {
+       "parent": "Purchase",
+       "parentfield": "roles",
+       "parenttype": "Role Profile",
+       "role": "Purchase User"
+      },
+      {
+       "parent": "Purchase",
+       "parentfield": "roles",
+       "parenttype": "Role Profile",
+       "role": "Purchase Manager"
+      }
+     ]
+    },
+    {
+     "docstatus": 0,
+     "doctype": "Role Profile",
+     "modified": "2025-02-27 17:39:06.892818",
+     "name": "Analyst Team",
+     "role_profile": "Analyst Team",
+     "roles": [
+      {
+       "parent": "Analyst Team",
+       "parentfield": "roles",
+       "parenttype": "Role Profile",
+       "role": "Analyst Team"
+      }
+     ]
+    },
+    {
+     "docstatus": 0,
+     "doctype": "Role Profile",
+     "modified": "2024-12-09 14:55:56.117369",
+     "name": "LMM",
+     "role_profile": "LMM",
+     "roles": [
+      {
+       "parent": "LMM",
+       "parentfield": "roles",
+       "parenttype": "Role Profile",
+       "role": "Last Mile Manager(LMM)"
+      },
+      {
+       "parent": "LMM",
+       "parentfield": "roles",
+       "parenttype": "Role Profile",
+       "role": "HR Manager"
+      },
+      {
+       "parent": "LMM",
+       "parentfield": "roles",
+       "parenttype": "Role Profile",
+       "role": "HR User"
+      }
+     ]
+    },
+    {
+     "docstatus": 0,
+     "doctype": "Role Profile",
+     "modified": "2025-01-17 11:01:46.879145",
+     "name": "LMH",
+     "role_profile": "LMH",
+     "roles": [
+      {
+       "parent": "LMH",
+       "parentfield": "roles",
+       "parenttype": "Role Profile",
+       "role": "Last Mile Head(LMH)"
+      },
+      {
+       "parent": "LMH",
+       "parentfield": "roles",
+       "parenttype": "Role Profile",
+       "role": "HR User"
+      },
+      {
+       "parent": "LMH",
+       "parentfield": "roles",
+       "parenttype": "Role Profile",
+       "role": "HR Manager"
+      },
+      {
+       "parent": "LMH",
+       "parentfield": "roles",
+       "parenttype": "Role Profile",
+       "role": "Leave Approver"
+      }
+     ]
+    },
+    {
+     "docstatus": 0,
+     "doctype": "Role Profile",
+     "modified": "2025-01-17 11:01:41.227498",
+     "name": "LMZm",
+     "role_profile": "LMZm",
+     "roles": [
+      {
+       "parent": "LMZm",
+       "parentfield": "roles",
+       "parenttype": "Role Profile",
+       "role": "HR User"
+      },
+      {
+       "parent": "LMZm",
+       "parentfield": "roles",
+       "parenttype": "Role Profile",
+       "role": "Last Mile Zonal Head(LMZm)"
+      },
+      {
+       "parent": "LMZm",
+       "parentfield": "roles",
+       "parenttype": "Role Profile",
+       "role": "Leave Approver"
+      }
+     ]
+    },
+    {
+     "docstatus": 0,
+     "doctype": "Role Profile",
+     "modified": "2025-01-17 11:01:12.970125",
+     "name": "LML",
+     "role_profile": "LML",
+     "roles": [
+      {
+       "parent": "LML",
+       "parentfield": "roles",
+       "parenttype": "Role Profile",
+       "role": "Last Mile Lead(LML)"
+      },
+      {
+       "parent": "LML",
+       "parentfield": "roles",
+       "parenttype": "Role Profile",
+       "role": "Leave Approver"
+      }
+     ]
+    },
+    {
+     "docstatus": 0,
+     "doctype": "Role Profile",
+     "modified": "2025-08-05 20:37:08.182400",
+     "name": "RND Manager",
+     "role_profile": "RND Manager",
+     "roles": [
+      {
+       "parent": "RND Manager",
+       "parentfield": "roles",
+       "parenttype": "Role Profile",
+       "role": "R&D-Manager"
+      },
+      {
+       "parent": "RND Manager",
+       "parentfield": "roles",
+       "parenttype": "Role Profile",
+       "role": "Demand Planner Approval-R&D"
+      }
+     ]
+    },
+    {
+     "docstatus": 0,
+     "doctype": "Role Profile",
+     "modified": "2025-08-05 20:44:45.764693",
+     "name": "B2C AVP",
+     "role_profile": "B2C AVP",
+     "roles": [
+      {
+       "parent": "B2C AVP",
+       "parentfield": "roles",
+       "parenttype": "Role Profile",
+       "role": "CRP-Sr. Executive"
+      },
+      {
+       "parent": "B2C AVP",
+       "parentfield": "roles",
+       "parenttype": "Role Profile",
+       "role": "B2C-AVP"
+      },
+      {
+       "parent": "B2C AVP",
+       "parentfield": "roles",
+       "parenttype": "Role Profile",
+       "role": "Demand Planner Approval-B2C"
+      }
+     ]
+    }
+   ]

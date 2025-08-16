@@ -1,5 +1,11 @@
 {
- "actions": [],
+ "actions": [
+  {
+   "action": "pre_populate_indent_items",
+   "action_type": "Server Action",
+   "label": "Fetch Items"
+  }
+ ],
  "autoname": "format:IN-{delivery_route}-{date}-{##}",
  "creation": "2025-05-24 18:10:03.825230",
  "doctype": "DocType",
@@ -149,7 +155,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-08-12 17:40:12.421269",
+ "modified": "2025-08-16 18:07:33.797676",
  "modified_by": "Administrator",
  "module": "custom_inventory_management",
  "name": "SF Indent Master",
