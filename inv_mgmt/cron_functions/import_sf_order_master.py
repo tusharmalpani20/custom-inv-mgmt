@@ -40,7 +40,7 @@ def create_error_log(reference_doctype=None, internal_reference=None, source_sys
         print(f"Failed to create error log: {str(e)}")
 
 
-def import_d2c_orders():
+def import_d2c_orders(delivery_date : str):
     """
     Import D2C orders from SF API and create SF Order Master records.
     Makes two API calls with 5 seconds delay as required.
@@ -62,7 +62,7 @@ def import_d2c_orders():
         }
         
         request_data = {
-            "delivery_date": "2025-08-10",
+            "delivery_date": delivery_date,
             "regenerate": False
         }
         
@@ -182,7 +182,7 @@ def import_d2c_orders():
         }
 
 
-def import_b2b_orders():
+def import_b2b_orders(delivery_date : str):
     """
     Import B2B orders from SF API and create SF Order Master records.
     Makes two API calls with 5 seconds delay as required.
@@ -204,7 +204,7 @@ def import_b2b_orders():
         }
         
         request_data = {
-            "delivery_date": "2025-08-10",
+            "delivery_date": delivery_date,
             "regenerate": False
         }
         
@@ -819,11 +819,13 @@ def import_all_orders():
     Import both D2C and B2B orders
     """
     print("Starting combined D2C and B2B order import...")
+
+    delivery_date = today()
     
-    d2c_result = import_d2c_orders()
+    d2c_result = import_d2c_orders(delivery_date)
     print(f"D2C Import Result: {d2c_result}")
     
-    b2b_result = import_b2b_orders()
+    b2b_result = import_b2b_orders(delivery_date)
     print(f"B2B Import Result: {b2b_result}")
     
     return {

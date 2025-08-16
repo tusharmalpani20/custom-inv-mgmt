@@ -274,9 +274,6 @@ fixtures = [
             "doctype": "Role Profile"
         },
         {
-            "doctype": "Customer Category"
-        },
-        {
             "doctype": "Designation",
             "filters": {
                 "custom_grade" : ["is", "set"]

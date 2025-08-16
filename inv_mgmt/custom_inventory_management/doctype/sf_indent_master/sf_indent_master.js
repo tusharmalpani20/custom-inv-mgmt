@@ -47,7 +47,53 @@
 	frappe.ui.form.on("SF Indent Master", {
 		refresh(frm) {
 			console.log("SF Indent Master form refresh triggered");
+			console.log("Current workflow state:", frm.doc.workflow_state);
+			console.log("Document status:", frm.doc.docstatus);
+			console.log("Is new:", frm.is_new());
+			console.log("Is dirty:", frm.doc.__unsaved);
+			
 			frm.set_value("company", frappe.get_doc("Company", frappe.get_doc("Company").get_default_company()).name);
+			
+			// Add custom button to fetch items - with workflow consideration
+			// Only show for Draft state or new documents, and when not dirty
+			if ((!frm.doc.workflow_state || frm.doc.workflow_state === "Draft") && !frm.doc.__unsaved) {
+				console.log("Adding Fetch Items button");
+				frm.add_custom_button(__('Fetch Items'), function() {
+					console.log("Fetch Items button clicked");
+					
+					// Call the server method explicitly
+					frappe.call({
+						method: "pre_populate_indent_items",
+						doc: frm.doc,
+						callback: function(r) {
+							if (!r.exc) {
+								frm.refresh_field('items');
+								frm.dirty();
+							}
+						}
+					});
+				});
+			} else {
+				console.log("Button not added - workflow_state:", frm.doc.workflow_state, "unsaved:", frm.doc.__unsaved);
+			}
+			
+			// DEBUG: Add button unconditionally to test
+			console.log("Adding DEBUG Fetch Items button unconditionally");
+			frm.add_custom_button(__('DEBUG: Fetch Items'), function() {
+				console.log("DEBUG Fetch Items button clicked");
+				
+				// Call the server method explicitly
+				frappe.call({
+					method: "pre_populate_indent_items",
+					doc: frm.doc,
+					callback: function(r) {
+						if (!r.exc) {
+							frm.refresh_field('items');
+							frm.dirty();
+						}
+					}
+				});
+			});
 			
 			// Set warehouse filter to show only Plant warehouses
 			frm.set_query("for", function() {
