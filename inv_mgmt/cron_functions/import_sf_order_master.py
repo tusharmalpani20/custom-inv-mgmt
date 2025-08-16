@@ -847,6 +847,7 @@ def enqueue_import_all_orders():
             queue="long",
             timeout=1200,  # 20 minutes timeout
             job_name="import_all_orders",
+            user="Administrator",
             is_async=True
         )
         print("Import all orders job has been enqueued successfully")

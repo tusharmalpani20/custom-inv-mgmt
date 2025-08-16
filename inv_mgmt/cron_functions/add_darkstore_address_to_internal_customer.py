@@ -53,8 +53,7 @@ def process_darkstore_addresses():
     facilities = frappe.get_all(
         "SF Facility Master",
         filters={
-            # "type" : ("in", ["Darkstore", "Distribution Center"]),
-            "type": "Darkstore",
+            "type" : ("in", ["Darkstore", "Distribution Center"]),
             "is_address_linked_to_internal_customer": 0,
             "shipping_address": ("is", "set"),
             "warehouse": ("is", "set")  # Only consider facilities with warehouse
