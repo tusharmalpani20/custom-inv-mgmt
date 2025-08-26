@@ -17,7 +17,7 @@
    "field_name": "barcode",
    "idx": 0,
    "is_system_generated": 1,
-   "modified": "2025-06-11 19:44:47.361451",
+   "modified": "2025-08-16 18:01:39.300655",
    "modified_by": "Administrator",
    "module": null,
    "name": "Item Barcode-barcode-hidden",
@@ -28,5 +28,5 @@
    "value": "0"
   }
  ],
- "sync_on_migrate": 1
+ "sync_on_migrate": 0
 }

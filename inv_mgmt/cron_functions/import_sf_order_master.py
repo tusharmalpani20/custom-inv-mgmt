@@ -7,9 +7,9 @@ from datetime import datetime
 import time
 
 # Time delay for D2C order API calls (5 seconds)
-D2C_ORDER_API_DELAY_SECONDS = 60
+D2C_ORDER_API_DELAY_SECONDS = 180
 # Time delay for B2B order API calls (5 seconds)
-B2B_ORDER_API_DELAY_SECONDS = 60
+B2B_ORDER_API_DELAY_SECONDS = 45
 
 def create_error_log(reference_doctype=None, internal_reference=None, source_system=None, 
                      external_id=None, entity_type=None, error_category=None, 
