@@ -1,32 +1,20 @@
 // Copyright (c) 2025, Hopnet Communications LLP and contributors
 // For license information, please see license.txt
 
-// frappe.ui.form.on("SF Demand Plan", {
-// 	refresh(frm) {
-
-// 	},
-// });
-
 frappe.ui.form.on('SF Demand Plan', {
     async onload(frm) {
         console.log('SF Demand Plan onload - planning_week:', frm.doc.planning_week);
         console.log('SF Demand Plan onload - existing entries:', frm.doc.sku_demand_entries);
         
-        // Add global CSS to fix z-index issues
-        addGlobalCSS();
-        
         await build_roster_table(frm);
         
-        // Ensure any existing dropdowns are closed
-        closeAllDropdowns();
+        // Ensure action buttons are visible
+        ensureActionButtonsVisible(frm);
     },
 
     async refresh(frm) {
         console.log('SF Demand Plan refresh - planning_week:', frm.doc.planning_week);
         console.log('SF Demand Plan refresh - existing entries:', frm.doc.sku_demand_entries);
-        
-        // Close any open dropdowns before rebuilding
-        closeAllDropdowns();
         
         frm.fields_dict.roster_table.$wrapper.empty();
         await build_roster_table(frm);
@@ -35,6 +23,14 @@ frappe.ui.form.on('SF Demand Plan', {
         if (frm.doc.docstatus === 1) {
             frm.fields_dict.roster_table.$wrapper.find('input').prop('disabled', true);
         }
+        
+        // Ensure action buttons are visible
+        ensureActionButtonsVisible(frm);
+        
+        // Additional check for action buttons after a delay
+        setTimeout(() => {
+            forceShowActionButtons();
+        }, 500);
     },
 
     // Add a method to reload the table when child table data changes
@@ -51,57 +47,184 @@ frappe.ui.form.on('SF Demand Plan', {
     }
 });
 
-// Function to add global CSS for fixing z-index issues
-function addGlobalCSS() {
-    if (!document.getElementById('demand-plan-css')) {
+// Function to ensure action buttons are visible and not blocked
+function ensureActionButtonsVisible(frm) {
+    // Force show action buttons
+    setTimeout(() => {
+        // Show any hidden action buttons
+        $('.form-actions').show();
+        $('.btn-primary').show();
+        $('.btn-secondary').show();
+        $('.btn-default').show();
+        
+        // Remove any blocking overlays
+        $('.modal-backdrop').remove();
+        $('.ui-blocking-overlay').remove();
+        $('.blocking-overlay').remove();
+        
+        // Ensure proper z-index for action buttons
+        $('.form-actions').css('z-index', '9999');
+        $('.btn-primary').css('z-index', '9999');
+        $('.btn-secondary').css('z-index', '9999');
+        
+        // Add comprehensive CSS to fix all issues
+        if (!document.getElementById('demand-plan-fixes')) {
+            const style = document.createElement('style');
+            style.id = 'demand-plan-fixes';
+            style.textContent = `
+                /* Table container fixes */
+                .table-container {
+                    max-height: 500px !important;
+                    overflow-y: auto !important;
+                    margin-bottom: 30px !important;
+                    position: relative !important;
+                }
+                
+                /* Sticky header fixes - HIGHEST PRIORITY */
+                .table-container thead {
+                    position: sticky !important;
+                    top: 0 !important;
+                    z-index: 1000 !important;
+                    background: #f8f9fa !important;
+                }
+                
+                .table-container thead th {
+                    position: sticky !important;
+                    top: 0 !important;
+                    z-index: 1001 !important;
+                    background: #f8f9fa !important;
+                }
+                
+                .table-container thead th[style*="position: sticky"] {
+                    z-index: 1002 !important;
+                    background: #f8f9fa !important;
+                }
+                
+                /* Holiday row fixes */
+                .table-container .holiday-row td {
+                    position: sticky !important;
+                    top: 40px !important;
+                    z-index: 1001 !important;
+                    background: #ffffff !important;
+                }
+                
+                .table-container .holiday-row td[style*="position: sticky"] {
+                    z-index: 1002 !important;
+                    background: #ffffff !important;
+                }
+                
+                /* Data row sticky column fixes */
+                .table-container tbody tr td[style*="position: sticky"] {
+                    z-index: 1000 !important;
+                }
+                
+                /* Input field fixes - LOWEST PRIORITY */
+                .table-container input[type="number"],
+                .table-container input[type="text"] {
+                    position: relative !important;
+                    z-index: 1 !important;
+                }
+                
+                /* Form actions fixes */
+                .form-actions {
+                    position: relative !important;
+                    z-index: 9999 !important;
+                    background: white !important;
+                    padding: 10px !important;
+                    border-top: 1px solid #e9ecef !important;
+                    margin-top: 20px !important;
+                }
+                
+                .btn-primary, .btn-secondary, .btn-default {
+                    position: relative !important;
+                    z-index: 10000 !important;
+                }
+                
+                /* Ensure table doesn't block anything */
+                .table-container table {
+                    position: relative !important;
+                    z-index: 1 !important;
+                }
+                
+                .table-container tbody {
+                    position: relative !important;
+                    z-index: 1 !important;
+                }
+                
+                /* Remove any problematic overlays */
+                .modal-backdrop,
+                .ui-blocking-overlay,
+                .blocking-overlay {
+                    display: none !important;
+                }
+            `;
+            document.head.appendChild(style);
+        }
+        
+        console.log('Action buttons visibility ensured');
+    }, 100);
+}
+
+// Function to force show action buttons with multiple approaches
+function forceShowActionButtons() {
+    console.log('Force showing action buttons...');
+    
+    // Method 1: Direct jQuery manipulation
+    $('.form-actions').show().css({
+        'display': 'block !important',
+        'visibility': 'visible !important',
+        'opacity': '1 !important',
+        'z-index': '99999 !important',
+        'position': 'relative !important'
+    });
+    
+    $('.btn-primary, .btn-secondary, .btn-default').show().css({
+        'display': 'inline-block !important',
+        'visibility': 'visible !important',
+        'opacity': '1 !important',
+        'z-index': '100000 !important',
+        'position': 'relative !important'
+    });
+    
+    // Method 2: Remove any blocking elements
+    $('.modal-backdrop, .ui-blocking-overlay, .blocking-overlay, .overlay').remove();
+    
+    // Method 3: Force Frappe to show action buttons
+    if (window.frappe && window.frappe.ui && window.frappe.ui.form) {
+        const currentForm = window.frappe.ui.form.get_cur_frm();
+        if (currentForm) {
+            currentForm.show_actions();
+        }
+    }
+    
+    // Method 4: Add CSS to ensure visibility
+    if (!document.getElementById('force-action-buttons')) {
         const style = document.createElement('style');
-        style.id = 'demand-plan-css';
+        style.id = 'force-action-buttons';
         style.textContent = `
-            .demand-plan-container {
+            .form-actions {
+                display: block !important;
+                visibility: visible !important;
+                opacity: 1 !important;
+                z-index: 99999 !important;
                 position: relative !important;
-                z-index: 1 !important;
+                background: white !important;
+                padding: 10px !important;
+                border-top: 1px solid #e9ecef !important;
+                margin-top: 20px !important;
             }
-            .demand-plan-table {
+            .btn-primary, .btn-secondary, .btn-default {
+                display: inline-block !important;
+                visibility: visible !important;
+                opacity: 1 !important;
+                z-index: 100000 !important;
                 position: relative !important;
-                z-index: 2 !important;
-            }
-            .demand-plan-table th,
-            .demand-plan-table td {
-                position: relative !important;
-                z-index: 3 !important;
-            }
-            .demand-plan-input {
-                position: relative !important;
-                z-index: 4 !important;
-            }
-            /* Ensure dropdowns don't block the interface */
-            .dropdown-menu,
-            .select2-dropdown,
-            .modal-backdrop {
-                z-index: 9999 !important;
-            }
-            /* Hide any blocking overlays */
-            .ui-blocking-overlay {
-                display: none !important;
             }
         `;
         document.head.appendChild(style);
     }
-}
-
-// Function to close all dropdowns and modals
-function closeAllDropdowns() {
-    $('.dropdown-menu').hide();
-    $('.select2-dropdown').hide();
-    $('.modal-backdrop').hide();
-    $('.ui-blocking-overlay').hide();
     
-    // Also close any Frappe-specific dropdowns
-    $('.frappe-dropdown').hide();
-    $('.frappe-autocomplete-dropdown').hide();
-    
-    // Remove any blocking overlays
-    $('.blocking-overlay').remove();
+    console.log('Action buttons force show completed');
 }
 
 async function build_roster_table(frm) {
@@ -113,13 +236,12 @@ async function build_roster_table(frm) {
 
     console.log('Building roster table for planning week:', frm.doc.planning_week);
 
-    // Clear any default margins from the wrapper and add proper classes
+    // Clear any default margins from the wrapper
     frm.fields_dict.roster_table.$wrapper.css({
         'margin': '0',
         'padding': '0',
-        'position': 'relative',
-        'z-index': '1'
-    }).addClass('demand-plan-container');
+        'position': 'relative'
+    });
 
     // Fetch SKU list
     const skuList = await frappe.call({
@@ -155,21 +277,21 @@ async function build_roster_table(frm) {
 
     console.log('Final demand map:', demandMap);
 
-    // Build the HTML table with improved z-index and positioning
-    let table = `<div style="margin-bottom: 15px; position: relative; z-index: 1;">
-        <div class="input-group" style="max-width: 400px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border-radius: 6px; overflow: hidden; border: 1px solid #e9ecef; position: relative; z-index: 2;">
+    // Build the HTML table with proper positioning
+    let table = `<div style="margin-bottom: 15px;">
+        <div class="input-group" style="max-width: 400px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border-radius: 6px; overflow: hidden; border: 1px solid #e9ecef;">
             <span class="input-group-addon" style="background: #f8f9fa; border: none; padding: 12px 16px; display: flex; align-items: center; justify-content: center;">
                 <i class="fa fa-search" style="color: #6c757d;"></i>
             </span>
-            <input type="text" class="form-control demand-plan-input" id="sku-search" placeholder="Search SKUs..." 
+            <input type="text" class="form-control" id="sku-search" placeholder="Search SKUs..." 
                 style="border: none; padding: 12px 16px; font-size: 14px; background: white; height: auto;">
         </div>
     </div>
-    <div class="table-container demand-plan-table" style="max-height: 700px; overflow-y: auto; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); border: 1px solid #e9ecef; background: white; margin-top: 0; position: relative; z-index: 2;">
-        <table class="table demand-plan-table" style="font-size: 13px; margin: 0; width: 100%; border-collapse: collapse;">
-        <thead style="position: sticky; top: 0; background: #f8f9fa; z-index: 10;">
+    <div class="table-container" style="max-height: 500px; overflow-y: auto; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); border: 1px solid #e9ecef; background: white; margin-bottom: 30px;">
+        <table class="table" style="font-size: 13px; margin: 0; width: 100%; border-collapse: collapse;">
+        <thead style="position: sticky; top: 0; background: #f8f9fa;">
         <tr style="background: #f8f9fa; margin: 0;">
-        <th style="position: sticky; left: 0; background: #f8f9fa; z-index: 11; border-right: 1px solid #dee2e6; min-width: 180px; padding: 8px; color: #495057; font-weight: 600; text-align: left; margin: 0;">SKU</th>`;
+        <th style="position: sticky; left: 0; background: #f8f9fa; border-right: 1px solid #dee2e6; min-width: 180px; padding: 8px; color: #495057; font-weight: 600; text-align: left; margin: 0;">SKU</th>`;
     
     for (let i = 0; i < 7; i++) {
         const dateObj = frappe.datetime.str_to_obj(frappe.datetime.add_days(frm.doc.planning_week, i));
@@ -177,7 +299,7 @@ async function build_roster_table(frm) {
         const dayStr = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][dateObj.getDay()];
         table += `<th style="background: #f8f9fa; min-width: 100px; padding: 8px; color: #495057; font-weight: 600; text-align: center; margin: 0;">${dayStr}<br><small style="color: #6c757d;">${dateStr}</small></th>`;
     }
-    table += `</tr><tr style="background: #ffffff; margin: 0;" class="holiday-row"><td style="position: sticky; left: 0; background: #ffffff; z-index: 11; border-right: 1px solid #dee2e6; padding: 6px; font-weight: 600; color: #495057; margin: 0;">Holiday</td>`;
+    table += `</tr><tr style="background: #ffffff; margin: 0;" class="holiday-row"><td style="position: sticky; left: 0; background: #ffffff; border-right: 1px solid #dee2e6; padding: 6px; font-weight: 600; color: #495057; margin: 0;">Holiday</td>`;
 
     for (let i = 0; i < 7; i++) {
         const d = frappe.datetime.str_to_obj(frappe.datetime.add_days(frm.doc.planning_week, i)).toDateString();
@@ -190,7 +312,7 @@ async function build_roster_table(frm) {
     skuList.message.forEach((item, index) => {
         const rowBg = index % 2 === 0 ? '#ffffff' : '#f8f9fa';
         table += `<tr class="sku-row" data-sku="${item.item_code.toLowerCase()}" data-name="${item.item_name.toLowerCase()}" style="background: ${rowBg}; margin: 0;">
-        <td style="position: sticky; left: 0; background: ${rowBg}; z-index: 1; border-right: 1px solid #dee2e6; padding: 8px; min-width: 180px; margin: 0;">
+        <td style="position: sticky; left: 0; background: ${rowBg}; border-right: 1px solid #dee2e6; padding: 8px; min-width: 180px; margin: 0;">
             <div style="font-weight: 600; color: #495057; margin-bottom: 2px; font-size: 12px;">${item.item_name}</div>
             <div style="font-size: 11px; color: #6c757d;">${item.item_code}</div>
         </td>`;
@@ -200,7 +322,7 @@ async function build_roster_table(frm) {
             const disabled = (frm.doc.docstatus === 1) ? 'disabled' : '';
             table += `<td style="padding: 6px; min-width: 100px; text-align: center; vertical-align: middle; margin: 0;">
                 <div style="display: flex; justify-content: center; align-items: center;">
-                    <input type="number" class="form-control sku-input demand-plan-input" 
+                    <input type="number" class="form-control sku-input" 
                     data-item="${item.item_code}" data-day="${i}" value="${val}" min="0" 
                     style="width: 70px; height: 28px; font-size: 12px; border: 1px solid #ced4da; border-radius: 4px; text-align: center; transition: all 0.2s ease; background: white; margin: 0;" ${disabled}>
                 </div>
@@ -211,13 +333,6 @@ async function build_roster_table(frm) {
 
     table += `</tbody></table></div>`;
     frm.fields_dict.roster_table.$wrapper.html(table);
-
-    // Add click-outside handler to close any open dropdowns
-    $(document).off('click.demand-plan').on('click.demand-plan', function(e) {
-        if (!$(e.target).closest('.table-container, .input-group, .dropdown-menu, .select2-container, .demand-plan-container').length) {
-            closeAllDropdowns();
-        }
-    });
 
     // Add hover effects and focus styles
     frm.fields_dict.roster_table.$wrapper.find('.sku-input').on('focus', function() {
@@ -280,9 +395,100 @@ async function build_roster_table(frm) {
         // Mark the form as dirty so Save becomes active
         frm.dirty();
     });
-
-    // Clean up event handlers when form is destroyed
-    frm.fields_dict.roster_table.$wrapper.on('remove', function() {
-        $(document).off('click.demand-plan');
-    });
 }
+
+// Function to start monitoring action buttons
+function startActionButtonMonitor() {
+    console.log('Starting action button monitor...');
+    
+    // Clear any existing interval
+    if (window.actionButtonInterval) {
+        clearInterval(window.actionButtonInterval);
+    }
+    
+    // Check every 2 seconds for action buttons
+    window.actionButtonInterval = setInterval(() => {
+        const formActions = $('.form-actions');
+        const actionButtons = $('.btn-primary, .btn-secondary, .btn-default');
+        
+        // If action buttons are missing or hidden, force show them
+        if (formActions.length === 0 || formActions.is(':hidden') || 
+            actionButtons.length === 0 || actionButtons.is(':hidden')) {
+            console.log('Action buttons missing or hidden, forcing show...');
+            forceShowActionButtons();
+        }
+        
+        // Also check if they're behind other elements
+        if (formActions.length > 0) {
+            const zIndex = parseInt(formActions.css('z-index')) || 0;
+            if (zIndex < 9999) {
+                console.log('Action buttons z-index too low, fixing...');
+                forceShowActionButtons();
+            }
+        }
+    }, 2000);
+    
+    // Also check on various events
+    $(document).on('scroll.action-buttons', forceShowActionButtons);
+    $(document).on('click.action-buttons', forceShowActionButtons);
+    $(window).on('resize.action-buttons', forceShowActionButtons);
+    
+    console.log('Action button monitor started');
+}
+
+// Function to cleanup event listeners and intervals
+function cleanupActionButtonMonitor() {
+    console.log('Cleaning up action button monitor...');
+    
+    if (window.actionButtonInterval) {
+        clearInterval(window.actionButtonInterval);
+        window.actionButtonInterval = null;
+    }
+    
+    $(document).off('scroll.action-buttons');
+    $(document).off('click.action-buttons');
+    $(window).off('resize.action-buttons');
+    
+    console.log('Action button monitor cleaned up');
+}
+
+// Global document ready handler to ensure action buttons are always visible
+$(document).ready(function() {
+    console.log('Document ready - ensuring action buttons are visible...');
+    
+    // Wait a bit for Frappe to load
+    setTimeout(() => {
+        forceShowActionButtons();
+        startActionButtonMonitor();
+    }, 1000);
+    
+    // Also check when the page becomes visible
+    $(document).on('visibilitychange', function() {
+        if (!document.hidden) {
+            console.log('Page became visible - checking action buttons...');
+            forceShowActionButtons();
+        }
+    });
+    
+    // Check on any DOM changes
+    const observer = new MutationObserver(function(mutations) {
+        mutations.forEach(function(mutation) {
+            if (mutation.type === 'childList') {
+                // Check if action buttons were removed
+                const formActions = $('.form-actions');
+                if (formActions.length === 0) {
+                    console.log('Action buttons removed from DOM - forcing show...');
+                    setTimeout(forceShowActionButtons, 100);
+                }
+            }
+        });
+    });
+    
+    // Start observing
+    observer.observe(document.body, {
+        childList: true,
+        subtree: true
+    });
+    
+    console.log('Global action button monitoring started');
+});
