@@ -168,14 +168,8 @@ class SFIndentMaster(Document):
 					title="Inactive Driver"
 				)
 		
-		# Additional validation: Check if vehicle is active
-		if self.vehicle:
-			vehicle_status = frappe.get_value("Vehicle", self.vehicle, "status")
-			if vehicle_status != "Active":
-				frappe.throw(
-					f"Vehicle {self.vehicle} is not active (Status: {vehicle_status}). Please select an active vehicle.",
-					title="Inactive Vehicle"
-				)
+		# Note: Vehicle status validation removed as Vehicle doctype doesn't have a status field
+		# If vehicle status validation is needed in the future, a custom status field should be added to Vehicle doctype
 
 	def before_save(self):
 		"""
