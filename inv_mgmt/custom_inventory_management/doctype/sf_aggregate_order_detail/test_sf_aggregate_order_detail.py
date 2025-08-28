@@ -5,5 +5,5 @@
 from frappe.tests.utils import FrappeTestCase
 
 
-class TestAggregateOrderDetail(FrappeTestCase):
+class TestSFAggregateOrderDetail(FrappeTestCase):
 	pass

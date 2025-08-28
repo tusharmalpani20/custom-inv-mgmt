@@ -5,5 +5,5 @@
 from frappe.model.document import Document
 
 
-class AggregateOrderItem(Document):
+class SFAggregateOrderDetail(Document):
 	pass

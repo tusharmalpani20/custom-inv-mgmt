@@ -53,7 +53,7 @@
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Entity Type",
-   "options": "\nCustomer\nFacility\nWarehouse\nOrder D2C\nOrder B2B\nProduct\nCombo Product\nAddress\nExternal Mapping\nItem Link\nSales Order\nDelivery Note"
+   "options": "\nCustomer\nFacility\nWarehouse\nOrder D2C\nOrder B2B\nProduct\nCombo Product\nAddress\nExternal Mapping\nItem Link\nSales Order\nDelivery Note\nSF Aggregate Order Detail"
   },
   {
    "fieldname": "error_category",
@@ -95,7 +95,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-07-25 16:30:34.087338",
+ "modified": "2025-08-27 16:50:52.568079",
  "modified_by": "Administrator",
  "module": "custom_inventory_management",
  "name": "SF Inventory Data Import Error Logs",

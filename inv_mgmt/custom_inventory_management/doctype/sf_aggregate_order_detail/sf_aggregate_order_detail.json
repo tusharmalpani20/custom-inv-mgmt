@@ -2,7 +2,7 @@
  "actions": [],
  "allow_auto_repeat": 1,
  "allow_import": 1,
- "autoname": "naming_series:",
+ "autoname": "format:SF-AOD-{transaction_date}-{######}",
  "creation": "2013-06-18 12:39:59",
  "doctype": "DocType",
  "document_type": "Document",
@@ -288,7 +288,7 @@
    "label": "Items",
    "oldfieldname": "sales_order_details",
    "oldfieldtype": "Table",
-   "options": "Aggregate Order Item",
+   "options": "SF Aggregate Order Item",
    "reqd": 1
   },
   {
@@ -529,11 +529,11 @@
  "idx": 105,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-08-26 17:18:50.048842",
+ "modified": "2025-08-27 15:43:06.531958",
  "modified_by": "Administrator",
  "module": "custom_inventory_management",
- "name": "Aggregate Order Detail",
- "naming_rule": "By \"Naming Series\" field",
+ "name": "SF Aggregate Order Detail",
+ "naming_rule": "Expression",
  "owner": "Administrator",
  "permissions": [
   {
